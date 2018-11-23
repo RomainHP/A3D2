@@ -5,6 +5,8 @@ var gl;
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var objMatrix = mat4.create();
+
+var gravite = 9.81;
 // =====================================================
 
 
@@ -110,11 +112,41 @@ Balls3D.initAll = function()
 {
 
 	vertices = [
-		-0.5, -0.5, 0.2,
-		 0.5, -0.5, 0.2,
-		 0.5,  0.5, 0.2,
-		 0.3,  0.2, 0.2,
-		 0.1,  -0.4, 0.2
+		-0.5,	-0.5,	0.5,
+		 0.5,	-0.5,	0.4,
+		 0.5,	0.5,	0.3,
+		 0.3,	0.2,	0.5,
+		 0.1,	-0.4,	0.2
+	];
+
+	// Rayons des balls
+	radius = [
+		10.0,
+		20.0,
+		30.0,
+		40.0,
+		50.0
+	];
+
+	// couleurs des balls
+	colors = [
+		0.0,	0.0,	0.0,	1.0,
+		1.0,	0.0,	0.0,	1.0,
+		0.0,	1.0,	0.0,	1.0,
+		0.0,	0.0,	1.0,	1.0,
+		1.0,	1.0,	0.0,	1.0
+	];
+
+	// Masse de l'objet
+	this.mass = 10;
+
+	// Vecteurs vitesses des balls
+	this.speed = [
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0
 	];
 
 	this.vBuffer = gl.createBuffer();
@@ -122,6 +154,18 @@ Balls3D.initAll = function()
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 5;
+
+	this.rBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(radius), gl.STATIC_DRAW);
+	this.rBuffer.itemSize = 1;
+	this.rBuffer.numItems = 5;
+
+	this.cBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	this.cBuffer.itemSize = 4;
+	this.cBuffer.numItems = 5;
 
 	console.log("Balls3D : init buffers ok.");
 
@@ -137,10 +181,23 @@ Balls3D.setShadersParams = function()
 
 	gl.useProgram(this.shader);
 
+	// Vertex Position
 	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
 	gl.enableVertexAttribArray(this.shader.vAttrib);
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	// Radius
+	this.shader.rAttrib = gl.getAttribLocation(this.shader, "aRadius");
+	gl.enableVertexAttribArray(this.shader.rAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
+	gl.vertexAttribPointer(this.shader.rAttrib,this.rBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	// Color
+	this.shader.cAttrib = gl.getAttribLocation(this.shader, "aColor");
+	gl.enableVertexAttribArray(this.shader.cAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
+	gl.vertexAttribPointer(this.shader.cAttrib,this.cBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
@@ -162,7 +219,18 @@ Balls3D.draw = function()
 // =====================================================
 Balls3D.animate = function()
 {
+	/*while(1){
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		Plane3D.draw();
+		
+		this.vBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+		this.vBuffer.itemSize = 3;
+		this.vBuffer.numItems = 5;
 
+		Balls3D.draw();
+	}*/
 }
 
 // =====================================================
@@ -323,6 +391,7 @@ function drawScene() {
 	if(shadersOk()) {
 		Plane3D.draw();
 		Balls3D.draw();
+		Balls3D.animate();
 	}
 
 }
