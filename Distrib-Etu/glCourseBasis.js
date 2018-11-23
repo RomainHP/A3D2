@@ -6,7 +6,8 @@ var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var objMatrix = mat4.create();
 
-var gravite = 9.81;
+var gravity = 9.81;
+var time = 0;
 // =====================================================
 
 
@@ -111,7 +112,15 @@ var Balls3D = { fname:'balls', loaded:-1, shader:null };
 Balls3D.initAll = function()
 {
 
-	vertices = [
+	this.startingVertices = [
+		-0.5,	-0.5,	0.5,
+		 0.5,	-0.5,	0.4,
+		 0.5,	0.5,	0.3,
+		 0.3,	0.2,	0.5,
+		 0.1,	-0.4,	0.2
+	];
+
+	this.vertices = [
 		-0.5,	-0.5,	0.5,
 		 0.5,	-0.5,	0.4,
 		 0.5,	0.5,	0.3,
@@ -120,7 +129,7 @@ Balls3D.initAll = function()
 	];
 
 	// Rayons des balls
-	radius = [
+	this.radius = [
 		10.0,
 		20.0,
 		30.0,
@@ -141,23 +150,31 @@ Balls3D.initAll = function()
 	this.mass = 10;
 
 	// Vecteurs vitesses des balls
+	this.startingSpeed = [
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity
+	];
+
 	this.speed = [
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity,
+		0.0,	0.0,	- this.gravity
 	];
 
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.startingVertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 5;
 
 	this.rBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(radius), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.radius), gl.STATIC_DRAW);
 	this.rBuffer.itemSize = 1;
 	this.rBuffer.numItems = 5;
 
@@ -219,24 +236,29 @@ Balls3D.draw = function()
 // =====================================================
 Balls3D.animate = function()
 {
-	/*while(1){
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		Plane3D.draw();
-		
-		this.vBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-		this.vBuffer.itemSize = 3;
-		this.vBuffer.numItems = 5;
+	for (var i = 2; i < this.vertices.length; i+=3) {
+		indiceRadius = Math.trunc(i/3);
+		this.speed[i] = - gravity * (time/1000) + this.startingVertices[i];
+		// rebond
+		if ((this.vertices[i]-(this.radius[indiceRadius]/500)<0)||(this.vertices[i]-(this.radius[indiceRadius]/500)>1)){
+			this.speed[i] = - this.speed[i];
+		}
+		this.vertices[i] = - 0.5 * gravity * (time/1000) * (time/1000) + this.speed[i] * (time/1000) + this.startingVertices[i];
+		//this.vertices[i] = - 0.5 * gravity * (time/1000) * (time/1000) + this.startingSpeed[i] * (time/1000) + this.startingVertices[i];
+	}
+	this.vBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+	this.vBuffer.itemSize = 3;
+	this.vBuffer.numItems = 5;
 
-		Balls3D.draw();
-	}*/
+	Balls3D.draw();
 }
 
 // =====================================================
 Balls3D.tick = function()
 {
-
+	//time = time + 1;
 }
 
 
