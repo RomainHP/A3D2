@@ -236,15 +236,16 @@ Balls3D.draw = function()
 // =====================================================
 Balls3D.animate = function()
 {
+	// boucle sur z des objets
 	for (var i = 2; i < this.vertices.length; i+=3) {
 		indiceRadius = Math.trunc(i/3);
-		this.speed[i] = - gravity * (time/1000) + this.startingVertices[i];
+		this.speed[i] = - gravity * (time/1000.0) + this.startingVertices[i];
 		// rebond
-		if ((this.vertices[i]-(this.radius[indiceRadius]/500)<0)||(this.vertices[i]-(this.radius[indiceRadius]/500)>1)){
+		if ((this.vertices[i]-(this.radius[indiceRadius]/500.0)<0.0)||(this.vertices[i]-(this.radius[indiceRadius]/500.0)>1.0)){
 			this.speed[i] = - this.speed[i];
 		}
-		this.vertices[i] = - 0.5 * gravity * (time/1000) * (time/1000) + this.speed[i] * (time/1000) + this.startingVertices[i];
-		//this.vertices[i] = - 0.5 * gravity * (time/1000) * (time/1000) + this.startingSpeed[i] * (time/1000) + this.startingVertices[i];
+		this.vertices[i] = - 0.5 * gravity * (time/1000.0) * (time/1000.0) + this.speed[i] * (time/1000) + this.startingVertices[i];
+		//this.vertices[i] = - 0.5 * gravity * (time/1000.0) * (time/1000.0) + this.startingSpeed[i] * (time/1000.0) + this.startingVertices[i];
 	}
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
