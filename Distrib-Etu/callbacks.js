@@ -28,7 +28,6 @@ window.requestAnimFrame = (function()
 function tick() {
 	requestAnimFrame(tick);
 	drawScene();
-	time = time + 1;
 }
 
 // =====================================================

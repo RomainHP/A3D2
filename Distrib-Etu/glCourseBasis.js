@@ -120,21 +120,13 @@ Balls3D.initAll = function()
 		 0.1,	-0.4,	0.2
 	];
 
-	this.vertices = [
-		-0.5,	-0.5,	0.5,
-		 0.5,	-0.5,	0.4,
-		 0.5,	0.5,	0.3,
-		 0.3,	0.2,	0.5,
-		 0.1,	-0.4,	0.2
-	];
-
 	// Rayons des balls
 	this.radius = [
-		10.0,
 		20.0,
 		30.0,
 		40.0,
-		50.0
+		50.0,
+		60.0
 	];
 
 	// couleurs des balls
@@ -151,19 +143,20 @@ Balls3D.initAll = function()
 
 	// Vecteurs vitesses des balls
 	this.startingSpeed = [
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity
+		0.0,	0.0,	0,
+		0.0,	0.0,	0,
+		0.0,	0.0,	0,
+		0.0,	0.0,	0,
+		0.0,	0.0,	0
 	];
 
-	this.speed = [
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity,
-		0.0,	0.0,	- this.gravity
+	// Vecteurs accelerations des balls
+	this.startingAcceleration = [
+		0.0,	0.0,	- gravity,
+		0.0,	0.0,	- gravity,
+		0.0,	0.0,	- gravity,
+		0.0,	0.0,	- gravity,
+		0.0,	0.0,	- gravity
 	];
 
 	this.vBuffer = gl.createBuffer();
@@ -236,30 +229,31 @@ Balls3D.draw = function()
 // =====================================================
 Balls3D.animate = function()
 {
+	//speed = this.startingSpeed;
+	vertices = this.startingVertices.slice();
 	// boucle sur z des objets
-	for (var i = 2; i < this.vertices.length; i+=3) {
+	for (var i = 0; i < vertices.length; i++) {
 		indiceRadius = Math.trunc(i/3);
-		this.speed[i] = - gravity * (time/1000.0) + this.startingVertices[i];
+		//speed[i] = this.startingAcceleration[i] * (time/1000.0) + this.startingVertices[i];
+		//vertices[i] = - 0.5 * gravity * (time/1000.0) * (time/1000.0) + speed[i] * (time/1000) + this.startingVertices[i];
+		vertices[i] = 0.5 * this.startingAcceleration[i] * (time/1000) * (time/1000) + this.startingSpeed[i] * (time/1000) + this.startingVertices[i];
 		// rebond
-		if ((this.vertices[i]-(this.radius[indiceRadius]/500.0)<0.0)||(this.vertices[i]-(this.radius[indiceRadius]/500.0)>1.0)){
-			this.speed[i] = - this.speed[i];
+		if (vertices[i]-(this.radius[indiceRadius]/500.0)<0.0){
+			this.startingVertices = vertices.slice();
+			this.startingAcceleration[i] = - Math.sign(this.startingAcceleration[i]) * 100/time;
+		} else if (vertices[i]-(this.radius[indiceRadius]/500.0)>0.5) {
+			this.startingVertices = vertices.slice();
+			this.startingAcceleration[i] =  - Math.sign(this.startingAcceleration[i]) * 100/time;
 		}
-		this.vertices[i] = - 0.5 * gravity * (time/1000.0) * (time/1000.0) + this.speed[i] * (time/1000) + this.startingVertices[i];
-		//this.vertices[i] = - 0.5 * gravity * (time/1000.0) * (time/1000.0) + this.startingSpeed[i] * (time/1000.0) + this.startingVertices[i];
 	}
+	// ajout au buffer
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 5;
-
+	// dessin de la ball
 	Balls3D.draw();
-}
-
-// =====================================================
-Balls3D.tick = function()
-{
-	//time = time + 1;
 }
 
 
@@ -409,11 +403,11 @@ function shadersOk()
 
 // =====================================================
 function drawScene() {
-
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	if(shadersOk()) {
+		time = time + 1;
 		Plane3D.draw();
-		Balls3D.draw();
+		//Balls3D.draw();
 		Balls3D.animate();
 	}
 
