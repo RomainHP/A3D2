@@ -119,26 +119,17 @@ Balls3D.initAll = function()
 		radius5 = (Math.random() * (0.2 - 0.6) + 0.6);
 		
 		random = [
-			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius1), radius1*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius2), radius2*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius3), radius3*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius4), radius4*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius5), radius5*100
+			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius1), radius1*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius2), radius2*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius3), radius3*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius4), radius4*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius5), radius5*100
 		]
 		return random;
 	  }
 
 	//Position en x,y,z et rayon en w
-	this.vertices = initRandomPos();
-
-	// Rayons des balls
-	// this.radius = [
-	// 	20.0,
-	// 	30.0,
-	// 	40.0,
-	// 	50.0,
-	// 	60.0
-	// ];
+	this.vertices = initRandomPos(5);
 
 	// couleurs des balls
 	colors = [
@@ -149,16 +140,13 @@ Balls3D.initAll = function()
 		1.0,	1.0,	0.0,	1.0
 	];
 
-	// Masse de l'objet
-	this.mass = 10;
-
 	// Vecteurs vitesses des balls
 	this.speed = [
-		0.0,	0.0,	0,
-		0.0,	0.0,	0,
-		0.0,	0.0,	0,
-		0.0,	0.0,	0,
-		0.0,	0.0,	0
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0,
+		0.0,	0.0,	0.0
 	];
 
 	// Vecteurs forces des balls
@@ -175,12 +163,6 @@ Balls3D.initAll = function()
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 4;
 	this.vBuffer.numItems = 5;
-
-	// this.rBuffer = gl.createBuffer();
-	// gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
-	// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.radius), gl.STATIC_DRAW);
-	// this.rBuffer.itemSize = 1;
-	// this.rBuffer.numItems = 5;
 
 	this.cBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
@@ -207,12 +189,6 @@ Balls3D.setShadersParams = function()
 	gl.enableVertexAttribArray(this.shader.vAttrib);
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	// Radius
-	// this.shader.rAttrib = gl.getAttribLocation(this.shader, "aRadius");
-	// gl.enableVertexAttribArray(this.shader.rAttrib);
-	// gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
-	// gl.vertexAttribPointer(this.shader.rAttrib,this.rBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	// Color
 	this.shader.cAttrib = gl.getAttribLocation(this.shader, "aColor");
@@ -242,45 +218,45 @@ Balls3D.animate = function()
 {
 	if(shadersOk()) {
 		nbPasTemps = 10;
-		frottement = -0.001;
+		frottement = 0.001;
 		// boucle pas de temps
 		for (var j = 0; j < nbPasTemps; j++) {
 			// bilans des forces de chaque ball
-			for (var i = 0; i < this.vertices.length; i+=3) {
+			for (var i = 0; i < this.vBuffer.numItems; i++) {
 				// test des collisions entre ball
-				for (var k = i; k < this.vertices.length; k+=3){
-					dist = this.vertices[i]-this.vertices[k] + this.vertices[i+1]-this.vertices[k+1] + this.vertices[i+2]-this.vertices[k+2];
+				for (var k = i; k < this.vBuffer.numItems; k++){
+					//dist = this.vertices[i]-this.vertices[k] + this.vertices[i+1]-this.vertices[k+1] + this.vertices[i+2]-this.vertices[k+2];
 				}
 			}
 			// boucle sur les objets
-			for (var i = 0; i < this.vertices.length; i+=3) {
+			for (var i = 0; i < this.vBuffer.numItems; i++) {
 				// vitesse
-				vx = this.speed[i] + 0.001 * this.forces[i];
-				vy = this.speed[i+1] + 0.001 * this.forces[i+1];
-				vz = this.speed[i+2] + 0.001 * this.forces[i+2] - 0.001 * gravity;
+				vx = this.speed[i*3] + 0.001 * this.forces[i*3];
+				vy = this.speed[i*3+1] + 0.001 * this.forces[i*3+1];
+				vz = this.speed[i*3+2] + 0.001 * this.forces[i*3+2] - 0.001 * gravity;
 				// frottement
-				vx += frottement * vx;
-				vy += frottement * vy;
-				vz += frottement * vz;
+				vx -= frottement * vx;
+				vy -= frottement * vy;
+				vz -= frottement * vz;
 				//position
-				x = this.vertices[i] + 0.001 * vx;
-				y = this.vertices[i+1] + 0.001 * vy;
-				z = this.vertices[i+2] + 0.001 * vz;
+				x = this.vertices[i*4] + 0.001 * vx;
+				y = this.vertices[i*4+1] + 0.001 * vy;
+				z = this.vertices[i*4+2] + 0.001 * vz;
 				// rebond	
-				if (z<0){
-					z = 0;
+				if (z<this.vertices[i*4+3]){
+					z = this.vertices[i*4+3];
 					vz = -vz;
 				}
 				if (z>0.7){
 					z = 0.7;
 					vz = -vz;
 				}
-				if (x<0){
-					x = 0;
+				if (x<this.vertices[i*4+3]){
+					x = this.vertices[i*4+3];
 					vx = - vx;
 				}
-				if (y<0){
-					y = 0;
+				if (y<this.vertices[i*4+3]){
+					y = this.vertices[i*4+3];
 					vy = - vy;
 				}
 				if (x>0.7){
@@ -292,13 +268,13 @@ Balls3D.animate = function()
 					vy = - vy;
 				}
 				// affectation vitesse
-				this.speed[i] = vx;
-				this.speed[i+1] = vy;
-				this.speed[i+2] = vz;
+				this.speed[i*3] = vx;
+				this.speed[i*3+1] = vy;
+				this.speed[i*3+2] = vz;
 				// affectation position
-				this.vertices[i] = x;
-				this.vertices[i+1] = y;
-				this.vertices[i+2] = z
+				this.vertices[i*3] = x;
+				this.vertices[i*3+1] = y;
+				this.vertices[i*3+2] = z
 			}
 		}
 		// ajout au buffer
