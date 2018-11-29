@@ -27,6 +27,7 @@ window.requestAnimFrame = (function()
 // ==========================================
 function tick() {
 	requestAnimFrame(tick);
+	Balls3D.animate();
 	drawScene();
 }
 
