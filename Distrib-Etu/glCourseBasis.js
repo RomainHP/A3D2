@@ -7,7 +7,6 @@ var pMatrix = mat4.create();
 var objMatrix = mat4.create();
 
 var gravity = 9.81;
-var time = 0;
 // =====================================================
 
 
@@ -241,34 +240,71 @@ Balls3D.draw = function()
 // =====================================================
 Balls3D.animate = function()
 {
-	// if(shadersOk()) {
-	// 	tmpVertices = this.vertices.slice();
-	// 	// boucle sur les objets
-	// 	for (var i = 0; i < tmpVertices.length; i+=3) {
-	// 		indiceRadius = Math.trunc(i/4);
-	// 		tmpVertices[i] =  this.speed[i] * (time/1000) + this.vertices[i];
-	// 		tmpVertices[i+1] = this.speed[i+1] * (time/1000) + this.vertices[i+1];
-	// 		tmpVertices[i+2] = - 0.5 * gravity * (time/1000) * (time/1000) + this.speed[i+2] * (time/1000) + this.vertices[i+2];
-	// 		// rebond
-	// 		if (tmpVertices[i+2]-(this.vertices[indiceRadius]/500.0)<0.0){
-	// 			this.vertices[i] = tmpVertices[i];
-	// 			this.vertices[i+1] = tmpVertices[i+1];
-	// 			this.vertices[i+2] = tmpVertices[i+2];
-	// 			this.speed[i+2] = - this.speed[i+2];
-	// 		} else if (tmpVertices[i+2]-(this.vertices[indiceRadius]/500.0)>0.5) {
-	// 			this.vertices[i] = tmpVertices[i];
-	// 			this.vertices[i+1] = tmpVertices[i+1];
-	// 			this.vertices[i+2] = tmpVertices[i+2];
-	// 			this.speed[i+2] = - this.speed[i+2];
-	// 		}
-	// 	}
-	// 	// ajout au buffer
-	// 	this.vBuffer = gl.createBuffer();
-	// 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	// 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-	// 	this.vBuffer.itemSize = 3;
-	// 	this.vBuffer.numItems = 5;
-	// }
+	if(shadersOk()) {
+		nbPasTemps = 10;
+		frottement = -0.001;
+		// boucle pas de temps
+		for (var j = 0; j < nbPasTemps; j++) {
+			// bilans des forces de chaque ball
+			for (var i = 0; i < this.vertices.length; i+=3) {
+				// test des collisions entre ball
+				for (var k = i; k < this.vertices.length; k+=3){
+					dist = this.vertices[i]-this.vertices[k] + this.vertices[i+1]-this.vertices[k+1] + this.vertices[i+2]-this.vertices[k+2];
+				}
+			}
+			// boucle sur les objets
+			for (var i = 0; i < this.vertices.length; i+=3) {
+				// vitesse
+				vx = this.speed[i] + 0.001 * this.forces[i];
+				vy = this.speed[i+1] + 0.001 * this.forces[i+1];
+				vz = this.speed[i+2] + 0.001 * this.forces[i+2] - 0.001 * gravity;
+				// frottement
+				vx += frottement * vx;
+				vy += frottement * vy;
+				vz += frottement * vz;
+				//position
+				x = this.vertices[i] + 0.001 * vx;
+				y = this.vertices[i+1] + 0.001 * vy;
+				z = this.vertices[i+2] + 0.001 * vz;
+				// rebond	
+				if (z<0){
+					z = 0;
+					vz = -vz;
+				}
+				if (z>0.7){
+					z = 0.7;
+					vz = -vz;
+				}
+				if (x<0){
+					x = 0;
+					vx = - vx;
+				}
+				if (y<0){
+					y = 0;
+					vy = - vy;
+				}
+				if (x>0.7){
+					x = 0.7;
+					vx = - vx;
+				}
+				if (y>0.7){
+					y = 0.7;
+					vy = - vy;
+				}
+				// affectation vitesse
+				this.speed[i] = vx;
+				this.speed[i+1] = vy;
+				this.speed[i+2] = vz;
+				// affectation position
+				this.vertices[i] = x;
+				this.vertices[i+1] = y;
+				this.vertices[i+2] = z
+			}
+		}
+		// ajout au buffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+	}
 }
 
 
@@ -420,7 +456,6 @@ function shadersOk()
 function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	if(shadersOk()) {
-		time = time + 1;
 		Plane3D.draw();
 		Balls3D.draw();
 	}
