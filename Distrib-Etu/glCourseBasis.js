@@ -225,38 +225,55 @@ Balls3D.animate = function()
 			for (var i = 0; i < this.vBuffer.numItems; i++) {
 				// test des collisions entre ball
 				for (var k = i; k < this.vBuffer.numItems; k++){
-					//dist = this.vertices[i]-this.vertices[k] + this.vertices[i+1]-this.vertices[k+1] + this.vertices[i+2]-this.vertices[k+2];
+					radiusA = this.vertices[i*4+3];
+					radiusB = this.vertices[i*4+3];
+					AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
+					normAB = AB.x * AB.y * AB.z;
+					distance = radiusA + radiusB - normAB;
+					if (distance<0){
+						// collision
+						// forces de A
+						this.forces[i*4] = 10 * distance * (-AB.x/normAB);
+						this.forces[i*4+1] = 10 * distance * (-AB.y/normAB);
+						this.forces[i*4+2] = 10 * distance * (-AB.z/normAB);
+						// forces de B
+						this.forces[k*4] = - this.forces[i*4];
+						this.forces[k*4+1] = - this.forces[i*4+1];
+						this.forces[k*4+2] = - this.forces[i*4+2];
+					}
 				}
 			}
 			// boucle sur les objets
 			for (var i = 0; i < this.vBuffer.numItems; i++) {
+				// rayon = masse
+				radius = this.vertices[i*4+3]/1000;
 				// vitesse
-				vx = this.speed[i*3] + 0.001 * this.forces[i*3];
-				vy = this.speed[i*3+1] + 0.001 * this.forces[i*3+1];
-				vz = this.speed[i*3+2] + 0.001 * this.forces[i*3+2] - 0.001 * gravity;
+				vx = this.speed[i*3] + 0.001 * (this.forces[i*3] / radius);
+				vy = this.speed[i*3+1] + 0.001 * (this.forces[i*3+1] / radius);
+				vz = this.speed[i*3+2] + 0.001 * (this.forces[i*3+2] / radius) - 0.001 * gravity;
 				// frottement
 				vx -= frottement * vx;
 				vy -= frottement * vy;
 				vz -= frottement * vz;
-				//position
+				// position
 				x = this.vertices[i*4] + 0.001 * vx;
 				y = this.vertices[i*4+1] + 0.001 * vy;
 				z = this.vertices[i*4+2] + 0.001 * vz;
-				// rebond	
-				if (z<this.vertices[i*4+3]){
-					z = this.vertices[i*4+3];
+				// rebond
+				if (z<radius){
+					z = radius;
 					vz = -vz;
 				}
 				if (z>0.7){
 					z = 0.7;
 					vz = -vz;
 				}
-				if (x<this.vertices[i*4+3]){
-					x = this.vertices[i*4+3];
+				if (x<radius){
+					x = radius;
 					vx = - vx;
 				}
-				if (y<this.vertices[i*4+3]){
-					y = this.vertices[i*4+3];
+				if (y<radius){
+					y = radius;
 					vy = - vy;
 				}
 				if (x>0.7){
@@ -272,9 +289,9 @@ Balls3D.animate = function()
 				this.speed[i*3+1] = vy;
 				this.speed[i*3+2] = vz;
 				// affectation position
-				this.vertices[i*3] = x;
-				this.vertices[i*3+1] = y;
-				this.vertices[i*3+2] = z
+				this.vertices[i*4] = x;
+				this.vertices[i*4+1] = y;
+				this.vertices[i*4+2] = z
 			}
 		}
 		// ajout au buffer
