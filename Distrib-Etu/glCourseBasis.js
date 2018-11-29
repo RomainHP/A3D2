@@ -111,23 +111,35 @@ var Balls3D = { fname:'balls', loaded:-1, shader:null };
 // =====================================================
 Balls3D.initAll = function()
 {
+	//Remplissage aléatoire des positions de départ 
+	function initRandomPos(nbBilles) {
+		radius1 = (Math.random() * (0.2 - 0.6) + 0.6);
+		radius2 = (Math.random() * (0.2 - 0.6) + 0.6);
+		radius3 = (Math.random() * (0.2 - 0.6) + 0.6);
+		radius4 = (Math.random() * (0.2 - 0.6) + 0.6);
+		radius5 = (Math.random() * (0.2 - 0.6) + 0.6);
+		
+		random = [
+			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius1), radius1*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius2), radius2*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius3), radius3*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius4), radius4*100,
+			(Math.random() * (-0.7 - 0.7) + 0.7),(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius5), radius5*100
+		]
+		return random;
+	  }
 
-	this.startingVertices = [
-		-0.5,	-0.5,	0.5,
-		 0.5,	-0.5,	0.4,
-		 0.5,	0.5,	0.3,
-		 0.3,	0.2,	0.5,
-		 0.1,	-0.4,	0.2
-	];
+	//Position en x,y,z et rayon en w
+	this.vertices = initRandomPos();
 
 	// Rayons des balls
-	this.radius = [
-		20.0,
-		30.0,
-		40.0,
-		50.0,
-		60.0
-	];
+	// this.radius = [
+	// 	20.0,
+	// 	30.0,
+	// 	40.0,
+	// 	50.0,
+	// 	60.0
+	// ];
 
 	// couleurs des balls
 	colors = [
@@ -142,7 +154,7 @@ Balls3D.initAll = function()
 	this.mass = 10;
 
 	// Vecteurs vitesses des balls
-	this.startingSpeed = [
+	this.speed = [
 		0.0,	0.0,	0,
 		0.0,	0.0,	0,
 		0.0,	0.0,	0,
@@ -161,15 +173,15 @@ Balls3D.initAll = function()
 
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.startingVertices), gl.STATIC_DRAW);
-	this.vBuffer.itemSize = 3;
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+	this.vBuffer.itemSize = 4;
 	this.vBuffer.numItems = 5;
 
-	this.rBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.radius), gl.STATIC_DRAW);
-	this.rBuffer.itemSize = 1;
-	this.rBuffer.numItems = 5;
+	// this.rBuffer = gl.createBuffer();
+	// gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
+	// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.radius), gl.STATIC_DRAW);
+	// this.rBuffer.itemSize = 1;
+	// this.rBuffer.numItems = 5;
 
 	this.cBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
@@ -198,10 +210,10 @@ Balls3D.setShadersParams = function()
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	// Radius
-	this.shader.rAttrib = gl.getAttribLocation(this.shader, "aRadius");
-	gl.enableVertexAttribArray(this.shader.rAttrib);
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
-	gl.vertexAttribPointer(this.shader.rAttrib,this.rBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	// this.shader.rAttrib = gl.getAttribLocation(this.shader, "aRadius");
+	// gl.enableVertexAttribArray(this.shader.rAttrib);
+	// gl.bindBuffer(gl.ARRAY_BUFFER, this.rBuffer);
+	// gl.vertexAttribPointer(this.shader.rAttrib,this.rBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	// Color
 	this.shader.cAttrib = gl.getAttribLocation(this.shader, "aColor");
@@ -222,39 +234,41 @@ Balls3D.draw = function()
 	if(this.shader) {		
 		this.setShadersParams();
 		setMatrixUniforms(this);
-		gl.drawArrays(gl.POINTS, 0, this.vBuffer.numItems);
+		gl.drawArrays(gl.POINTS, 0, this.vBuffer.numItems);	
 	}
 }
 
 // =====================================================
 Balls3D.animate = function()
 {
-	vertices = this.startingVertices.slice();
-	// boucle sur les objets
-	for (var i = 0; i < vertices.length; i+=3) {
-		indiceRadius = Math.trunc(i/3);
-		vertices[i] =  this.startingSpeed[i] * (time/1000) + this.startingVertices[i];
-		vertices[i+1] = this.startingSpeed[i+1] * (time/1000) + this.startingVertices[i+1];
-		vertices[i+2] = - 0.5 * gravity * (time/1000) * (time/1000) + this.startingSpeed[i+2] * (time/1000) + this.startingVertices[i+2];
-		// rebond
-		if (vertices[i+2]-(this.radius[indiceRadius]/500.0)<0.0){
-			this.startingVertices[i] = vertices[i];
-			this.startingVertices[i+1] = vertices[i+1];
-			this.startingVertices[i+2] = vertices[i+2];
-			this.startingSpeed[i+2] = - this.startingSpeed[i+2];
-		} else if (vertices[i+2]-(this.radius[indiceRadius]/500.0)>0.5) {
-			this.startingVertices[i] = vertices[i];
-			this.startingVertices[i+1] = vertices[i+1];
-			this.startingVertices[i+2] = vertices[i+2];
-			this.startingSpeed[i+2] = - this.startingSpeed[i+2];
-		}
-	}
-	// ajout au buffer
-	this.vBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-	this.vBuffer.itemSize = 3;
-	this.vBuffer.numItems = 5;
+	// if(shadersOk()) {
+	// 	tmpVertices = this.vertices.slice();
+	// 	// boucle sur les objets
+	// 	for (var i = 0; i < tmpVertices.length; i+=3) {
+	// 		indiceRadius = Math.trunc(i/4);
+	// 		tmpVertices[i] =  this.speed[i] * (time/1000) + this.vertices[i];
+	// 		tmpVertices[i+1] = this.speed[i+1] * (time/1000) + this.vertices[i+1];
+	// 		tmpVertices[i+2] = - 0.5 * gravity * (time/1000) * (time/1000) + this.speed[i+2] * (time/1000) + this.vertices[i+2];
+	// 		// rebond
+	// 		if (tmpVertices[i+2]-(this.vertices[indiceRadius]/500.0)<0.0){
+	// 			this.vertices[i] = tmpVertices[i];
+	// 			this.vertices[i+1] = tmpVertices[i+1];
+	// 			this.vertices[i+2] = tmpVertices[i+2];
+	// 			this.speed[i+2] = - this.speed[i+2];
+	// 		} else if (tmpVertices[i+2]-(this.vertices[indiceRadius]/500.0)>0.5) {
+	// 			this.vertices[i] = tmpVertices[i];
+	// 			this.vertices[i+1] = tmpVertices[i+1];
+	// 			this.vertices[i+2] = tmpVertices[i+2];
+	// 			this.speed[i+2] = - this.speed[i+2];
+	// 		}
+	// 	}
+	// 	// ajout au buffer
+	// 	this.vBuffer = gl.createBuffer();
+	// 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	// 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	// 	this.vBuffer.itemSize = 3;
+	// 	this.vBuffer.numItems = 5;
+	// }
 }
 
 
