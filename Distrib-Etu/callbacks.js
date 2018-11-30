@@ -7,7 +7,7 @@ var mouseDown = false;
 var lastMouseX = null;
 var lastMouseY = null;
 var rotZ = 0;
-var rotX = 0;
+var rotX = -1.5;
 
 // =====================================================
 window.requestAnimFrame = (function()
