@@ -110,65 +110,91 @@ var Balls3D = { fname:'balls', loaded:-1, shader:null };
 // =====================================================
 Balls3D.initAll = function()
 {
+	//Nombre de billes utilisées
+	var nbBilles = 7;
+
+	//========================================================================
 	//Remplissage aléatoire des positions de départ 
 	function initRandomPos(nbBilles) {
-		radius1 = (Math.random() * (0.2 - 0.6) + 0.6);
-		radius2 = (Math.random() * (0.2 - 0.6) + 0.6);
-		radius3 = (Math.random() * (0.2 - 0.6) + 0.6);
-		radius4 = (Math.random() * (0.2 - 0.6) + 0.6);
-		radius5 = (Math.random() * (0.2 - 0.6) + 0.6);
 		
-		random = [
-			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius1), radius1*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius2), radius2*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius3), radius3*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius4), radius4*100,
-			(Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (-0.7 - 0.7) + 0.7), (Math.random() * (0.0 - 0.5) + 0.5) + (radius5), radius5*100
-		]
+		var random = [];
+
+		//Remplissage de la position en x,y,z et du rayon en w
+		for(var i=0;i<nbBilles;i++){
+			radius = (Math.random() * (0.2 - 0.4) + 0.4);
+			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
+			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
+			random.push((Math.random() * (0.0 - 0.4) + 0.4));
+			random.push(radius*100);
+		}
+
 		return random;
 	  }
 
-	//Position en x,y,z et rayon en w
-	this.vertices = initRandomPos(5);
+	this.vertices = initRandomPos(nbBilles);
 
-	// couleurs des balls
-	colors = [
-		0.0,	0.0,	0.0,	1.0,
-		1.0,	0.0,	0.0,	1.0,
-		0.0,	1.0,	0.0,	1.0,
-		0.0,	0.0,	1.0,	1.0,
-		1.0,	1.0,	0.0,	1.0
-	];
+	//========================================================================
+	//Remplissage aléatoire des billes
+	function randomColors(nbBilles){
+		var randomColor = [];
 
-	// Vecteurs vitesses des balls
-	this.speed = [
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0
-	];
+		for(var i=0;i<nbBilles;i++){
+			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
+			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
+			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
+			randomColor.push(1.0);
+		}
 
-	// Vecteurs forces des balls
-	this.forces = [
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0,
-		0.0,	0.0,	0.0
-	];
+		return randomColor;
+	}
+
+	colors = randomColors(nbBilles);
+
+	//========================================================================
+	//Remplissage des vitesses initiales des billes
+	function initSpeed(nbBilles){
+		initSpeed = [];
+
+		for(var i=0;i<nbBilles;i++){
+			initSpeed.push(0.0);
+			initSpeed.push(0.0);
+			initSpeed.push(0.0);
+		}
+
+		return initSpeed;
+	}
+
+	this.speed = initSpeed(nbBilles);
+
+	//========================================================================
+	//Remplissage des forces initiales des billes
+	function initForces(nbBilles){
+		initForces = [];
+
+		for(var i=0;i<nbBilles;i++){
+			initForces.push(0.0);
+			initForces.push(0.0);
+			initForces.push(0.0);
+		}
+
+		return initForces;
+	}
+
+	this.forces = initForces(nbBilles);
+
+	//========================================================================
 
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 4;
-	this.vBuffer.numItems = 5;
+	this.vBuffer.numItems = nbBilles;
 
 	this.cBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 	this.cBuffer.itemSize = 4;
-	this.cBuffer.numItems = 5;
+	this.cBuffer.numItems = nbBilles;
 
 	console.log("Balls3D : init buffers ok.");
 
@@ -264,23 +290,19 @@ Balls3D.animate = function()
 					z = radius;
 					vz = -vz;
 				}
-				if (z>0.7){
-					z = 0.7;
-					vz = -vz;
-				}
-				if (x<radius){
+				if (x<-0.7+radius){
 					x = radius;
 					vx = - vx;
 				}
-				if (y<radius){
+				if (y<-0.7+radius){
 					y = radius;
 					vy = - vy;
 				}
-				if (x>0.7){
+				if (x>0.7-radius){
 					x = 0.7;
 					vx = - vx;
 				}
-				if (y>0.7){
+				if (y>0.7-radius){
 					y = 0.7;
 					vy = - vy;
 				}
