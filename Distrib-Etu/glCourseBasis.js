@@ -269,8 +269,8 @@ Balls3D.animate = function()
 				radius = this.vertices[i*4+3];
 				mass = radius*0.1;
 				// vitesse
-				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass) - 0.001 * (Math.cos(degToRad(rotX))*Math.sin(degToRad(rotZ))) * gravity;
-				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass) - 0.001 * (Math.sin(degToRad(rotX))*Math.cos(degToRad(rotZ))) * gravity;
+				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass) - 0.001 * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
+				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass) - 0.001 * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
 				vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - 0.001 * gravity;
 				// frottement
 				vx -= frottement * vx;
