@@ -1,6 +1,7 @@
 precision mediump float;
 
 varying vec4 vColor;
+varying vec3 vLight;
 
 void main(void)
 {
@@ -10,5 +11,6 @@ void main(void)
 	if (dist>(0.5*0.5))
 		discard;
 	// distance en fonction de la couleur
-	gl_FragColor = vColor * sqrt(dist);
+	vColor = vColor * sqrt(dist);
+	gl_FragColor = vec4(vColor.xyz * vLight, vColor.w);
 }

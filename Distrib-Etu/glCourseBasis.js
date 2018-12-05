@@ -150,7 +150,7 @@ Balls3D.initAll = function(nbBilles = 50)
 	//========================================================================
 	//Remplissage des vitesses initiales des billes
 	function initSpeed(nbBilles){
-		initSpeed = [];
+		var initSpeed = [];
 
 		for(var i=0;i<nbBilles;i++){
 			initSpeed.push(0.0);
@@ -162,6 +162,22 @@ Balls3D.initAll = function(nbBilles = 50)
 	}
 
 	this.speed = initSpeed(nbBilles);
+
+	//========================================================================
+	//Remplissage des normales initiales des billes
+	function initNormals(nbBilles){
+		var initNormal = [];
+
+		for(var i=0;i<nbBilles;i++){
+			initNormal.push(0.0);
+			initNormal.push(0.0);
+			initNormal.push(1.0);
+		}
+
+		return initNormal;
+	}
+
+	this.normals = initNormals(nbBilles);
 
 	//========================================================================
 
@@ -176,6 +192,12 @@ Balls3D.initAll = function(nbBilles = 50)
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 	this.cBuffer.itemSize = 4;
 	this.cBuffer.numItems = nbBilles;
+
+	this.nBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normals), gl.STATIC_DRAW);
+	this.nBuffer.itemSize = 3;
+	this.nBuffer.numItems = nbBilles;
 
 	console.log("Balls3D : init buffers ok.");
 
@@ -202,6 +224,12 @@ Balls3D.setShadersParams = function()
 	gl.enableVertexAttribArray(this.shader.cAttrib);
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
 	gl.vertexAttribPointer(this.shader.cAttrib,this.cBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	// Vertex Normal
+	this.shader.nAttrib = gl.getAttribLocation(this.shader, "aVertexNormal");
+	gl.enableVertexAttribArray(this.shader.nAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
+	gl.vertexAttribPointer(this.shader.nAttrib,this.nBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
