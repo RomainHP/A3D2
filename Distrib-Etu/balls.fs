@@ -11,6 +11,5 @@ void main(void)
 	if (dist>(0.5*0.5))
 		discard;
 	// distance en fonction de la couleur
-	vColor = vColor * sqrt(dist);
-	gl_FragColor = vec4(vColor.xyz * vLight, vColor.w);
+	gl_FragColor = vec4(vColor.xyz * vLight, vColor.w) * sqrt(dist);
 }

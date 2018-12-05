@@ -177,7 +177,7 @@ Balls3D.initAll = function(nbBilles = 50)
 		return initNormal;
 	}
 
-	this.normals = initNormals(nbBilles);
+	normals = initNormals(nbBilles);
 
 	//========================================================================
 
@@ -195,7 +195,7 @@ Balls3D.initAll = function(nbBilles = 50)
 
 	this.nBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normals), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 	this.nBuffer.itemSize = 3;
 	this.nBuffer.numItems = nbBilles;
 
