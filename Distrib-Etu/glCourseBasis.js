@@ -110,10 +110,6 @@ var Balls3D = { fname:'balls', loaded:-1, shader:null };
 // =====================================================
 Balls3D.initAll = function(nbBilles = 50)
 {
-	mat4.identity(objMatrix);
-	mat4.rotate(objMatrix, rotX, [1, 0, 0]);
-	mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
-
 	//========================================================================
 	//Remplissage aléatoire des positions de départ 
 	function initRandomPos(nbBilles) {

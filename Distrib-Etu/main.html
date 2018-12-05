@@ -18,13 +18,6 @@
 			nb = slider.value;
 			Balls3D.initAll(nb);
 		}
-
-		var slider = document.getElementById("rangeNb");
-		var output = document.getElementById("displayNb");
-		output.innerHTML = slider.value;
-		slider.oninput = function() {
-			output.innerHTML = this.value;
-		}
 	</script>
 
 </head>
@@ -67,7 +60,18 @@
 		  </tbody>
 		</table>
 	</div>
+	
 	<br><br>
+
+	<script>
+		var slider = document.getElementById("rangeNb");
+		var output = document.getElementById("displayNb");
+		output.innerHTML = slider.value;
+		slider.oninput = function() {
+			output.innerHTML = this.value;
+		}
+	</script>
+
 </body>
 
 
