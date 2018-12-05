@@ -8,12 +8,70 @@
 	<script type="text/javascript" src="callbacks.js"></script>
 	<script type="text/javascript" src="glCourseBasis.js"></script>
 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script>
+		function replay() {
+			var slider = document.getElementById("rangeNb");
+			nb = slider.value;
+			Balls3D.initAll(nb);
+		}
+	</script>
+
 </head>
 
 
 <body onload="webGLStart();">
-	<canvas id="WebGL-test" style="border:none;" width="800" height="600"></canvas>
+	<div class="table-responsive text-nowrap">
+		<table class="table" style="width: auto;">
+		  <thead>
+			<tr>
+			  <th scope="col">Options</th>
+			  <th scope="col">Rendu</th>
+			</tr>
+		  </thead>
+		  <tbody>
+			<tr>
+			  <td>
+				  <!-- Table des options -->
+				  <div class="table-responsive text-nowrap">
+					<table class="table">
+						<tbody>
+							<tr>
+								<td>
+									<input type="range" min="1" max="200" value="50" class="slider" id="rangeNb">
+									<p>Nombre de billes : <span id="displayNb"></span></p>
+								</td>
+							</tr>
+							<tr>
+								<td><button onclick="replay()">Rejouer</button></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			  </td>
+			  <td>
+				<!-- Rendu WebGL -->
+				<canvas id="WebGL-test" style="border:none;" width="800" height="600"></canvas>
+			  </td>
+			</tr>
+		  </tbody>
+		</table>
+	</div>
+	
 	<br><br>
+
+	<script>
+		var slider = document.getElementById("rangeNb");
+		var output = document.getElementById("displayNb");
+		output.innerHTML = slider.value;
+		slider.oninput = function() {
+			output.innerHTML = this.value;
+		}
+	</script>
+
 </body>
 
 

@@ -108,15 +108,8 @@ Plane3D.draw = function()
 var Balls3D = { fname:'balls', loaded:-1, shader:null };
 
 // =====================================================
-Balls3D.initAll = function()
+Balls3D.initAll = function(nbBilles = 50)
 {
-	mat4.identity(objMatrix);
-	mat4.rotate(objMatrix, rotX, [1, 0, 0]);
-	mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
-
-	//Nombre de billes utilisées
-	var nbBilles = 7;
-
 	//========================================================================
 	//Remplissage aléatoire des positions de départ 
 	function initRandomPos(nbBilles) {
@@ -125,20 +118,20 @@ Balls3D.initAll = function()
 
 		//Remplissage de la position en x,y,z et du rayon en w
 		for(var i=0;i<nbBilles;i++){
-			radius = (Math.random() * (0.2 - 0.4) + 0.4);
+			radius = (Math.random() * (0.03 - 0.07) + 0.07);
 			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
 			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
-			random.push((Math.random() * (0.0 - 0.4) + 0.4));
-			random.push(radius*100);
+			random.push((Math.random() * (0.0 - 0.7) + 0.7));
+			random.push(radius);
 		}
 
 		return random;
-	  }
+	}
 
 	this.vertices = initRandomPos(nbBilles);
 
 	//========================================================================
-	//Remplissage aléatoire des billes
+	//Remplissage aléatoire des couleurs des billes
 	function randomColors(nbBilles){
 		var randomColor = [];
 
@@ -169,22 +162,6 @@ Balls3D.initAll = function()
 	}
 
 	this.speed = initSpeed(nbBilles);
-
-	//========================================================================
-	//Remplissage des forces initiales des billes
-	function initForces(nbBilles){
-		initForces = [];
-
-		for(var i=0;i<nbBilles;i++){
-			initForces.push(0.0);
-			initForces.push(0.0);
-			initForces.push(0.0);
-		}
-
-		return initForces;
-	}
-
-	this.forces = initForces(nbBilles);
 
 	//========================================================================
 
@@ -248,7 +225,7 @@ Balls3D.animate = function()
 {
 	if(shadersOk()) {
 		nbPasTemps = 10;
-		frottement = 0.002;
+		frottement = 0.001;
 		ressort= 10.0;
 		// Vecteurs forces des balls
 		forces = Array(3*this.vBuffer.numItems).fill(0);
@@ -265,25 +242,28 @@ Balls3D.animate = function()
 					normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
 					distance = radiusA + radiusB - normAB;
 					if (distance>0){ // collision
+						fx = ressort * distance * (-AB[0]/normAB);
+						fy = ressort * distance * (-AB[1]/normAB);
+						fz = ressort * distance * (-AB[2]/normAB);
 						// forces sur A
-						forces[i*3]   += ressort * distance * (-AB[0]/normAB);
-						forces[i*3+1] += ressort * distance * (-AB[1]/normAB);
-						forces[i*3+2] += ressort * distance * (-AB[2]/normAB);
+						forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
+						forces[i*3+1] += fy * (radiusB/radiusA);
+						forces[i*3+2] += fz * (radiusB/radiusA);
 						// forces sur B
-						forces[k*3]   += ressort * distance * (AB[0]/normAB);
-						forces[k*3+1] += ressort * distance * (AB[1]/normAB);
-						forces[k*3+2] += ressort * distance * (AB[2]/normAB);
+						forces[k*3]   -= fx * (radiusA/radiusB);
+						forces[k*3+1] -= fy * (radiusA/radiusB);
+						forces[k*3+2] -= fz * (radiusA/radiusB);
 					}
 				}
 			}
 			// boucle sur les objets
 			for (var i = 0; i < this.vBuffer.numItems; i++) {
-				// rayon = masse
+				// rayon et masse
 				radius = this.vertices[i*4+3];
+				mass = radius*0.1;
 				// vitesse
-				mass = radius*0.01;
-				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass);
-				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass);
+				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass) - 0.001 * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
+				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass) - 0.001 * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
 				vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - 0.001 * gravity;
 				// frottement
 				vx -= frottement * vx;
@@ -296,23 +276,23 @@ Balls3D.animate = function()
 				// rebond
 				if (z<radius){
 					z = radius;
-					vz = -vz;
+					vz = - 0.9 * vz;
 				}
 				if (x<-0.7+radius){
 					x = -0.7+radius;
-					vx = - vx;
+					vx = - 0.9 * vx;
 				}
 				if (y<-0.7+radius){
 					y = -0.7+radius;
-					vy = - vy;
+					vy = - 0.9 * vy;
 				}
 				if (x>0.7-radius){
 					x = 0.7-radius;
-					vx = - vx;
+					vx = - 0.9 * vx;
 				}
 				if (y>0.7-radius){
 					y = 0.7-radius;
-					vy = - vy;
+					vy = - 0.9 * vy;
 				}
 				// affectation vitesse
 				this.speed[i*3] = vx;
