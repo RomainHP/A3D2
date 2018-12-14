@@ -18,6 +18,15 @@
 			nb = slider.value;
 			Balls3D.initAll(nb);
 		}
+		function change_animation_rotation() {
+			Balls3D.animationRotation = !Balls3D.animationRotation;
+			var button = document.getElementById("anime_button");
+			if (Balls3D.animationRotation) {
+				button.innerText = "Stop animation rotation";
+			} else {
+				button.innerText = "Play animation rotation";
+			}
+		}
 	</script>
 
 </head>
@@ -44,6 +53,16 @@
 									<input type="range" min="1" max="200" value="50" class="slider" id="rangeNb">
 									<p>Nombre de billes : <span id="displayNb"></span></p>
 								</td>
+							</tr>
+							<tr>
+								<td><button onclick="change_animation_rotation()" id="anime_button">Stop animation rotation</button></td>
+							</tr>
+							<tr>
+								<td>
+									<p>Choisir le modele de BRDF :</p>
+									<button onclick="Balls3D.setBRDFModel()">Lambert</button>
+									<button onclick="Balls3D.setBRDFModel()">Cook Torrance</button>
+							</td>
 							</tr>
 							<tr>
 								<td><button onclick="replay()">Rejouer</button></td>

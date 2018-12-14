@@ -1,7 +1,9 @@
 precision mediump float;
 
 varying vec4 vColor;
-varying vec3 vLight;
+varying vec4 vLightSource;
+varying vec4 vCoords;
+varying float vRadius;
 
 void main(void)
 {
@@ -10,6 +12,16 @@ void main(void)
 	float dist = ((0.5-pos.x)*(0.5-pos.x)+(0.5-pos.y)*(0.5-pos.y));
 	if (dist>(0.5*0.5))
 		discard;
-	// distance en fonction de la couleur
-	gl_FragColor = vec4(vColor.xyz * vLight, vColor.w) * sqrt(dist);
+	// calcul de la normale
+	float z = sqrt((0.5*0.5) - dist);
+	vec3 ps = vec3(pos.x,pos.y,z);	// coordonnees du point dans le fragment
+	vec3 n = normalize(ps-vec3(0.5,0.5,0.0));
+	// point dans le repere 3D
+	vec3 point3D = vCoords.xyz + vRadius * n;
+	// calcul de la lumiere
+	vec3 light = normalize(vLightSource.xyz-point3D);
+	light.y = - light.y;
+	float intensity = dot(light,n);
+	// couleur en fonction de l'intensite lumineuse
+	gl_FragColor = vec4(vColor.xyz * intensity, vColor.w);
 }
