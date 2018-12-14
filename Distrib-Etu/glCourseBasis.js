@@ -115,7 +115,7 @@ Balls3D.initAll = function()
 	mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
 
 	//Nombre de billes utilisées
-	var nbBilles = 7;
+	var nbBilles = 100;
 
 	//========================================================================
 	//Remplissage aléatoire des positions de départ 
@@ -125,11 +125,11 @@ Balls3D.initAll = function()
 
 		//Remplissage de la position en x,y,z et du rayon en w
 		for(var i=0;i<nbBilles;i++){
-			radius = (Math.random() * (0.2 - 0.4) + 0.4);
+			radius = (Math.random() * (0.04 - 0.10) + 0.10);
 			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
 			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
 			random.push((Math.random() * (0.0 - 0.4) + 0.4));
-			random.push(radius*100);
+			random.push(radius);
 		}
 
 		return random;
@@ -248,7 +248,7 @@ Balls3D.animate = function()
 {
 	if(shadersOk()) {
 		nbPasTemps = 10;
-		frottement = 0.002;
+		frottement = 0.001;
 		ressort= 10.0;
 		// Vecteurs forces des balls
 		forces = Array(3*this.vBuffer.numItems).fill(0);
