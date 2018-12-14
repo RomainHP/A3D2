@@ -118,10 +118,10 @@ Balls3D.initAll = function(nbBilles = 50)
 
 		//Remplissage de la position en x,y,z et du rayon en w
 		for(var i=0;i<nbBilles;i++){
-			radius = (Math.random() * (0.03 - 0.07) + 0.07);
+			radius = (Math.random() * (0.04 - 0.10) + 0.10);
 			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
 			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
-			random.push((Math.random() * (0.0 - 0.7) + 0.7));
+			random.push((Math.random() * (0.0 - 0.4) + 0.4));
 			random.push(radius);
 		}
 
