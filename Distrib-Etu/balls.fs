@@ -4,7 +4,6 @@ varying vec4 vColor;
 varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
-varying float vBrdfModel;
 
 void main(void)
 {
@@ -27,15 +26,8 @@ void main(void)
 	vec3 light = normalize(vLightSource.xyz-point3D);
 	light.y = - light.y;
 
-	// intensite lumineuse en fonction du brdf
-	float intensity = 1.0;
-	if (vBrdfModel==1.0) {	// Lambert
-		intensity = dot(light,n);
-	} else if (vBrdfModel==2.0) {	// Cook Torrance
-		
-	} else {
-		
-	}
+	// intensite lumineuse
+	float intensity = dot(light,n);
 
 	// couleur en fonction de l'intensite lumineuse
 	gl_FragColor = vec4(vColor.xyz * intensity, vColor.w);

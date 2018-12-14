@@ -5,13 +5,11 @@ attribute vec3 aVertexNormal;
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 uniform vec3 uLightSource;
-uniform float uBrdfModel;
 
 varying vec4 vColor;
 varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
-varying float vBrdfModel;
 
 void main(void) {
 	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
@@ -20,5 +18,4 @@ void main(void) {
 	vLightSource = uMVMatrix * vec4(uLightSource,1.0);
 	vCoords = uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
 	vRadius = aVertexPosition.w;
-	vBrdfModel = uBrdfModel;
 }
