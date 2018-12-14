@@ -5,6 +5,8 @@ var gl;
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var lightSource = [0.0,0.0,3.0];
+var lightSourceDeltaX = 0.0;
+var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
 var deltaZoom = 0.0;
 
@@ -369,6 +371,8 @@ function webGLStart() {
 	document.onmouseup = handleMouseUp;
 	document.onmousemove = handleMouseMove;
 	canvas.onwheel = handleScroll;
+	document.onkeydown = handleKeyDown;
+	document.onkeyup = handleKeyUp;
 
 	initGL(canvas);
 
