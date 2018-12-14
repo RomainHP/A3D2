@@ -5,6 +5,7 @@ var gl;
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var objMatrix = mat4.create();
+var deltaZoom = 0.0;
 
 var gravity = 9.81;
 // =====================================================
@@ -353,6 +354,7 @@ function webGLStart() {
 	canvas.onmousedown = handleMouseDown;
 	document.onmouseup = handleMouseUp;
 	document.onmousemove = handleMouseMove;
+	canvas.onwheel = handleScroll;
 
 	initGL(canvas);
 
@@ -457,7 +459,7 @@ function compileShaders(Obj3D)
 function setMatrixUniforms(Obj3D) {
 		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 		mat4.identity(mvMatrix);
-		mat4.translate(mvMatrix, [0.0, 0.0, -2.0]);
+		mat4.translate(mvMatrix, [0.0, 0.0, -2.0 + deltaZoom]);
 		mat4.multiply(mvMatrix, objMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);

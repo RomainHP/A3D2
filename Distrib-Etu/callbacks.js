@@ -72,3 +72,7 @@ function handleMouseMove(event) {
 	lastMouseX = newX
 	lastMouseY = newY;
 }
+//=======================================================
+function handleScroll(event){
+	deltaZoom += event.deltaY;
+}

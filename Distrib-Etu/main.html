@@ -18,6 +18,10 @@
 			nb = slider.value;
 			Balls3D.initAll(nb);
 		}
+
+		function resetZoom() {
+			deltaZoom = 0.0;
+		}
 	</script>
 
 </head>
@@ -47,6 +51,9 @@
 							</tr>
 							<tr>
 								<td><button onclick="replay()">Rejouer</button></td>
+							</tr>
+							<tr>
+								<td><button onclick="resetZoom()">Reset zoom</button></td>
 							</tr>
 						</tbody>
 					</table>
