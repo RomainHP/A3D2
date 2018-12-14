@@ -18,6 +18,10 @@
 			nb = slider.value;
 			Balls3D.initAll(nb);
 		}
+
+		function resetZoom() {
+			deltaZoom = 0.0;
+		}
 		function change_animation_rotation() {
 			Balls3D.animationRotation = !Balls3D.animationRotation;
 			var button = document.getElementById("anime_button");
@@ -66,6 +70,9 @@
 							</tr>
 							<tr>
 								<td><button onclick="replay()">Rejouer</button></td>
+							</tr>
+							<tr>
+								<td><button onclick="resetZoom()">Reset zoom</button></td>
 							</tr>
 						</tbody>
 					</table>
