@@ -4,6 +4,7 @@
 // Mouse management
 // =====================================================
 var mouseDown = false;
+var controlDown = false;
 var lastMouseX = null;
 var lastMouseY = null;
 var rotZ = 0;
@@ -42,13 +43,20 @@ function handleMouseDown(event) {
 	lastMouseX = event.clientX;
 	lastMouseY = event.clientY;
 }
-
+// =====================================================
+function handleKeyDown(event) {
+	if(event.key == "Control")
+		controlDown = true;
+}
 
 // =====================================================
 function handleMouseUp(event) {
 	mouseDown = false;
 }
-
+// =====================================================
+function handleKeyUp(event) {
+	controlDown = false;
+}
 
 // =====================================================
 function handleMouseMove(event) {
@@ -61,18 +69,34 @@ function handleMouseMove(event) {
 
 	var deltaX = newX - lastMouseX;
 	var deltaY = newY - lastMouseY;
+	
+	if(!controlDown){
+		rotX += degToRad(deltaY / 2);
+		rotZ += degToRad(deltaX / 2);
 
-	rotX += degToRad(deltaY / 2);
-	rotZ += degToRad(deltaX / 2);
+		mat4.identity(objMatrix);
+		mat4.rotate(objMatrix, rotX, [1, 0, 0]);
+		mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
 
-	mat4.identity(objMatrix);
-	mat4.rotate(objMatrix, rotX, [1, 0, 0]);
-	mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
+		lastMouseX = newX;
+		lastMouseY = newY;
+	}else{
+		if(lightSource[0] < -2.5)
+			lightSource[0] = -2.5;
+		else if(lightSource[0] > 2.5 )
+			lightSource[0] = 2.5;
+		else
+			lightSource[0] += deltaX/1000;
 
-	lastMouseX = newX
-	lastMouseY = newY;
+			if(lightSource[1] < -2.5)
+			lightSource[1] = -2.5;
+		else if(lightSource[1] > 2.5 )
+			lightSource[1] = 2.5;
+		else
+			lightSource[1] -= deltaY/1000;
+	}
 }
 //=======================================================
 function handleScroll(event){
-	deltaZoom += event.deltaY;
+	deltaZoom -= event.deltaY;
 }
