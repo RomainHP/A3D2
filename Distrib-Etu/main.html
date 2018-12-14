@@ -22,6 +22,15 @@
 		function resetZoom() {
 			deltaZoom = 0.0;
 		}
+		function change_animation_rotation() {
+			Balls3D.animationRotation = !Balls3D.animationRotation;
+			var button = document.getElementById("anime_button");
+			if (Balls3D.animationRotation) {
+				button.innerText = "Stop animation rotation";
+			} else {
+				button.innerText = "Play animation rotation";
+			}
+		}
 	</script>
 
 </head>
@@ -45,15 +54,18 @@
 						<tbody>
 							<tr>
 								<td>
-									<input type="range" min="1" max="200" value="50" class="slider" id="rangeNb">
+									<input type="range" min="1" max="200" value="50" class="form-control-range" id="rangeNb">
 									<p>Nombre de billes : <span id="displayNb"></span></p>
 								</td>
 							</tr>
 							<tr>
-								<td><button onclick="replay()">Rejouer</button></td>
+								<td><button class="btn btn-primary" onclick="replay()">Rejouer</button></td>
 							</tr>
 							<tr>
-								<td><button onclick="resetZoom()">Reset zoom</button></td>
+								<td><button class="btn btn-secondary" onclick="change_animation_rotation()" id="anime_button">Stop animation rotation</button></td>
+							</tr>
+							<tr>
+								<td><button class="btn btn-secondary" 	onclick="resetZoom()">Reset zoom</button></td>
 							</tr>
 						</tbody>
 					</table>

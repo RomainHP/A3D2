@@ -4,6 +4,7 @@ var gl;
 // =====================================================
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
+var lightSource = [0.0,0.0,3.0];
 var objMatrix = mat4.create();
 var deltaZoom = 0.0;
 
@@ -107,6 +108,8 @@ Plane3D.draw = function()
 // =====================================================
 
 var Balls3D = { fname:'balls', loaded:-1, shader:null };
+
+Balls3D.animationRotation = true;
 
 // =====================================================
 Balls3D.initAll = function(nbBilles = 50)
@@ -234,6 +237,7 @@ Balls3D.setShadersParams = function()
 
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
+	this.shader.lightSourceUniform = gl.getUniformLocation(this.shader, "uLightSource");
 
 	console.log("Balls3D : parameters ok.")
 
@@ -250,50 +254,62 @@ Balls3D.draw = function()
 }
 
 // =====================================================
+Balls3D.calculForces = function()
+{
+	// Vecteurs forces des balls
+	forces = Array(3*this.vBuffer.numItems).fill(0);
+	forces.fill(0);
+	// bilans des forces de chaque ball
+	for (var i = 0; i < this.vBuffer.numItems; i++) {
+		// test des collisions entre ball
+		for (var k = i+1; k < this.vBuffer.numItems; k++){
+			radiusA = this.vertices[i*4+3];
+			radiusB = this.vertices[k*4+3];
+			AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
+			normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
+			distance = radiusA + radiusB - normAB;
+			if (distance>0){ // collision
+				fx = ressort * distance * (-AB[0]/normAB);
+				fy = ressort * distance * (-AB[1]/normAB);
+				fz = ressort * distance * (-AB[2]/normAB);
+				// forces sur A
+				forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
+				forces[i*3+1] += fy * (radiusB/radiusA);
+				forces[i*3+2] += fz * (radiusB/radiusA);
+				// forces sur B
+				forces[k*3]   -= fx * (radiusA/radiusB);
+				forces[k*3+1] -= fy * (radiusA/radiusB);
+				forces[k*3+2] -= fz * (radiusA/radiusB);
+			}
+		}
+	}
+	return forces;
+}
+
+// =====================================================
 Balls3D.animate = function()
 {
 	if(shadersOk()) {
 		nbPasTemps = 10;
 		frottement = 0.001;
 		ressort= 10.0;
-		// Vecteurs forces des balls
-		forces = Array(3*this.vBuffer.numItems).fill(0);
 		// boucle pas de temps
 		for (var j = 0; j < nbPasTemps; j++) {
-			forces.fill(0);
-			// bilans des forces de chaque ball
-			for (var i = 0; i < this.vBuffer.numItems; i++) {
-				// test des collisions entre ball
-				for (var k = i+1; k < this.vBuffer.numItems; k++){
-					radiusA = this.vertices[i*4+3];
-					radiusB = this.vertices[k*4+3];
-					AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
-					normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
-					distance = radiusA + radiusB - normAB;
-					if (distance>0){ // collision
-						fx = ressort * distance * (-AB[0]/normAB);
-						fy = ressort * distance * (-AB[1]/normAB);
-						fz = ressort * distance * (-AB[2]/normAB);
-						// forces sur A
-						forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
-						forces[i*3+1] += fy * (radiusB/radiusA);
-						forces[i*3+2] += fz * (radiusB/radiusA);
-						// forces sur B
-						forces[k*3]   -= fx * (radiusA/radiusB);
-						forces[k*3+1] -= fy * (radiusA/radiusB);
-						forces[k*3+2] -= fz * (radiusA/radiusB);
-					}
-				}
-			}
+			forces = this.calculForces();
 			// boucle sur les objets
 			for (var i = 0; i < this.vBuffer.numItems; i++) {
 				// rayon et masse
 				radius = this.vertices[i*4+3];
 				mass = radius*0.1;
 				// vitesse
-				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass) - 0.001 * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
-				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass) - 0.001 * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
+				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass);
+				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass);
 				vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - 0.001 * gravity;
+				// si il y a une animation en fonction de la rotation de la scene
+				if (this.animationRotation){
+					vx -= 0.001 * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
+					vy -= 0.001 * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
+				}
 				// frottement
 				vx -= frottement * vx;
 				vy -= frottement * vy;
@@ -338,8 +354,6 @@ Balls3D.animate = function()
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 	}
 }
-
-
 
 
 // =====================================================
@@ -461,6 +475,8 @@ function setMatrixUniforms(Obj3D) {
 		mat4.identity(mvMatrix);
 		mat4.translate(mvMatrix, [0.0, 0.0, -2.0 + deltaZoom]);
 		mat4.multiply(mvMatrix, objMatrix);
+		
+		gl.uniform3fv(Obj3D.shader.lightSourceUniform, lightSource);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
 }
