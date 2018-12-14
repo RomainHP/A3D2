@@ -5,6 +5,7 @@ var gl;
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var lightSource = [0.0,0.0,3.0];
+var brdfModele = [1.0];
 var objMatrix = mat4.create();
 var deltaZoom = 0.0;
 
@@ -238,6 +239,7 @@ Balls3D.setShadersParams = function()
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
 	this.shader.lightSourceUniform = gl.getUniformLocation(this.shader, "uLightSource");
+	this.shader.brdfModelUniform = gl.getUniformLocation(this.shader, "uBrdfModel");
 
 	console.log("Balls3D : parameters ok.")
 
@@ -356,9 +358,17 @@ Balls3D.animate = function()
 }
 
 // =====================================================
-Balls3D.setBRDFModel = function()
+Balls3D.setBRDFModel = function(modele)
 {
-	
+	if (modele == cook){
+		brdfModele = [2.0];
+	} else if (modele == lambert) {
+		brdfModele = [1.0];
+	} else {
+		brdfModele = [0.0];
+	}
+	this.shader.brdfModelUniform = gl.getUniformLocation(this.shader, "uBrdfModel");
+	gl.uniform1f(Obj3D.shader.brdfModeleUniform, brdfModele);
 }
 
 
@@ -482,6 +492,7 @@ function setMatrixUniforms(Obj3D) {
 		mat4.translate(mvMatrix, [0.0, 0.0, -2.0 + deltaZoom]);
 		mat4.multiply(mvMatrix, objMatrix);
 		
+		gl.uniform1f(Obj3D.shader.brdfModeleUniform, brdfModele);
 		gl.uniform3fv(Obj3D.shader.lightSourceUniform, lightSource);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
