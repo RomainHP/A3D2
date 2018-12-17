@@ -192,7 +192,7 @@ Balls3D.initAll = function(nbBilles = 50)
 			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
 			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
 			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push(1.0);
+			randomColor.push((Math.random() * (0.0001 - 0.3) + 0.3));
 		}
 
 		return randomColor;
