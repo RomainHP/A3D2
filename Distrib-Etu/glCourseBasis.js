@@ -111,7 +111,7 @@ Plane3D.draw = function()
 
 var Balls3D = { fname:'balls', loaded:-1, shader:null };
 
-Balls3D.animationRotation = true;
+Balls3D.animationRotation = false;
 
 // =====================================================
 Balls3D.initAll = function(nbBilles = 50)

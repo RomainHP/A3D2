@@ -20,15 +20,16 @@ vec3 apply_lambert(vec3 li, vec3 kd, vec3 light, vec3 wi)
 //========================================================================
 
 // diapo 31 du cours
-vec3 apply_cook_torrance(float ni, float sigma, vec3 wo, vec3 wi, vec3 normal)
+float apply_cook_torrance(float ni, float sigma, vec3 wo, vec3 wi, vec3 normal)
 {
 	vec3 m = (wi+wo)/abs(wi+wo);
-	vec3 wh = wi + wo;
-	vec3 f = vec3(ni);
-	float d = ((sigma+2.0)/M_PI)*0.5*pow(dot(wh,normal),sigma);
+	float c = dot(wi,normal);
+	float g2 = sqrt(ni*ni + c*c - 1.0);
+	float f = 0.5 * pow(g2-c,2.0)/pow(g2+c,2.0) * (1.0 + (pow(c*(g2+c)-1.0,2.0)/pow(c*(g2-c)+1.0,2.0)));
+	float d = ((sigma+2.0)/M_PI)*0.5*pow(dot((wi + wo),normal),sigma);
 	float g = min(1.0, min((2.0*dot(normal,m)*dot(normal,wo))/dot(wo,m), (2.0*dot(normal,m)*dot(normal,wi))/dot(wi,m)));
-	vec3 fs = (d*g*f) / (4.0 * dot(wi,normal) * dot(wo,normal));
-	return vec3(0.0);
+	float fs = (d*g*f) / (4.0 * dot(wi,normal) * dot(wo,normal));
+	return fs;
 }
 
 //========================================================================
@@ -58,8 +59,8 @@ void main(void)
 	vec3 light = normalize(vLightSource.xyz-point3D);
 
 	vec3 l0 = apply_lambert(lightIntensity, vColor.xyz, light, n);
-	vec3 fs = apply_cook_torrance(ni, vColor.w, light, light, n);
+	float fs = apply_cook_torrance(ni, vColor.w, light, light, n);
 
 	// couleur en fonction de l'intensite lumineuse
-	gl_FragColor = vec4(l0+fs, 1.0);
+	gl_FragColor = vec4(l0, 1.0);
 }
