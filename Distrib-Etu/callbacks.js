@@ -86,14 +86,14 @@ function handleMouseMove(event) {
 		else if(lightSource[0] > 2.5 )
 			lightSource[0] = 2.5;
 		else
-			lightSource[0] += deltaX/1000;
+			lightSource[0] += deltaX/250;
 
 			if(lightSource[1] < -2.5)
 			lightSource[1] = -2.5;
 		else if(lightSource[1] > 2.5 )
 			lightSource[1] = 2.5;
 		else
-			lightSource[1] -= deltaY/1000;
+			lightSource[1] -= deltaY/250;
 	}
 }
 //=======================================================
