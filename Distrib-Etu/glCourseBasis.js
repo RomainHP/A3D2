@@ -4,7 +4,7 @@ var gl;
 // =====================================================
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
-var lightSource = [0.0,0.0,3.0];
+var lightSource = [0.0,0.0,0.5];
 var lightSourceDeltaX = 0.0;
 var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
@@ -12,6 +12,60 @@ var deltaZoom = 0.0;
 
 var gravity = 9.81;
 // =====================================================
+
+// =====================================================
+// Lumière 3D, position de la source de lumière
+// =====================================================
+
+var Light3D = { fname:'light', loaded:-1, shader:null };
+
+// =====================================================
+Light3D.initAll = function()
+{
+
+	this.lBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.lBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lightSource), gl.STATIC_DRAW);
+	this.lBuffer.itemSize = 3;
+	this.lBuffer.numItems = 1;
+
+	loadShaders(this);
+}
+
+// =====================================================
+Light3D.redraw = function()
+{
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.lBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lightSource), gl.STATIC_DRAW);
+}
+
+// =====================================================
+Light3D.setShadersParams = function()
+{
+	console.log("Plane3D : setting shader parameters...")
+
+	gl.useProgram(this.shader);
+
+	this.shader.lAttrib = gl.getAttribLocation(this.shader, "aLightSource");
+	gl.enableVertexAttribArray(this.shader.lAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.lBuffer);
+	gl.vertexAttribPointer(this.shader.lAttrib, this.lBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
+	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
+
+}
+
+// =====================================================
+Light3D.draw = function()
+{
+	if(this.shader) {		
+			this.setShadersParams();
+			setMatrixUniforms(this);
+			gl.drawArrays(gl.POINTS, 0, this.lBuffer.numItems);	
+
+	}
+}
 
 
 // =====================================================
@@ -489,7 +543,7 @@ function setMatrixUniforms(Obj3D) {
 // =====================================================
 function shadersOk()
 {
-	if((Plane3D.loaded == 4) && (Balls3D.loaded == 4)) return true;
+	if((Plane3D.loaded == 4) && (Balls3D.loaded == 4) && (Light3D.loaded == 4)) return true;
 
 	if(Plane3D.loaded < 0) {
 		Plane3D.loaded = 0;
@@ -499,6 +553,11 @@ function shadersOk()
 	if(Balls3D.loaded < 0) {
 		Balls3D.loaded = 0;
 		Balls3D.initAll();
+	}
+
+	if(Light3D.loaded < 0) {
+		Light3D.loaded = 0;
+		Light3D.initAll();
 	}
 
 	return false;
@@ -511,6 +570,7 @@ function drawScene() {
 	if(shadersOk()) {
 		Plane3D.draw();
 		Balls3D.draw();
+		Light3D.draw();
 	}
 
 }

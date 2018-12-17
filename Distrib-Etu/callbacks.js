@@ -81,19 +81,22 @@ function handleMouseMove(event) {
 		lastMouseX = newX;
 		lastMouseY = newY;
 	}else{
-		if(lightSource[0] < -2.5)
-			lightSource[0] = -2.5;
-		else if(lightSource[0] > 2.5 )
-			lightSource[0] = 2.5;
+		var coeff = 2500;
+		if((lightSource[0]+deltaX/coeff) < -1.)
+			lightSource[0] = -1.;
+		else if((lightSource[0]+deltaX/coeff) > 1. )
+			lightSource[0] = 1.;
 		else
-			lightSource[0] += deltaX/1000;
+			lightSource[0] += deltaX/coeff;
 
-			if(lightSource[1] < -2.5)
-			lightSource[1] = -2.5;
-		else if(lightSource[1] > 2.5 )
-			lightSource[1] = 2.5;
+		if((lightSource[1]-deltaY/coeff) < -1.)
+			lightSource[1] = -1.;
+		else if((lightSource[1]-deltaY/coeff) > 1. )
+			lightSource[1] = 1.;
 		else
-			lightSource[1] -= deltaY/1000;
+			lightSource[1] -= deltaY/coeff;
+
+		Light3D.redraw();
 	}
 }
 //=======================================================
