@@ -4,7 +4,7 @@ attribute vec3 aVertexNormal;
 
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
-uniform vec4 uLightSource;
+uniform vec3 uLightSource;
 
 varying vec4 vColor;
 varying vec4 vLightSource;

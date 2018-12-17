@@ -33,6 +33,13 @@ Light3D.initAll = function()
 }
 
 // =====================================================
+Light3D.redraw = function()
+{
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.lBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lightSource), gl.STATIC_DRAW);
+}
+
+// =====================================================
 Light3D.setShadersParams = function()
 {
 	console.log("Plane3D : setting shader parameters...")
