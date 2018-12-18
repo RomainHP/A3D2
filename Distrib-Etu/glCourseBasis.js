@@ -51,7 +51,6 @@ Light3D.setShadersParams = function()
 
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
-
 }
 
 // =====================================================
@@ -61,7 +60,6 @@ Light3D.draw = function()
 			this.setShadersParams();
 			setMatrixUniforms(this);
 			gl.drawArrays(gl.POINTS, 0, this.lBuffer.numItems);	
-
 	}
 }
 
@@ -142,7 +140,6 @@ Plane3D.setShadersParams = function()
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
 
 	console.log("Plane3D : parameters ok.")
-
 }
 
 // =====================================================
@@ -305,7 +302,6 @@ Balls3D.setShadersParams = function()
 	this.shader.lightSourceUniform = gl.getUniformLocation(this.shader, "uLightSource");
 
 	console.log("Balls3D : parameters ok.")
-
 }
 
 // =====================================================
@@ -319,7 +315,8 @@ Balls3D.draw = function()
 }
 
 // =====================================================
-Balls3D.calculForces = function(movingball)
+// Calcul des forces exercees sur chaque balle
+Balls3D.calculForces = function()
 {
 	// Vecteurs forces des balls
 	forces = Array(3*this.vBuffer.numItems).fill(0);
@@ -532,7 +529,6 @@ function compileShaders(Obj3D)
 	}
 
 	console.log("Compilation performed for ("+Obj3D.fname+") shader");
-
 }
 
 
@@ -572,7 +568,6 @@ function shadersOk()
 	}
 
 	return false;
-
 }
 
 // =====================================================
