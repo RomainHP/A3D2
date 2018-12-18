@@ -4,6 +4,7 @@ varying vec4 vColor;
 varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
+varying float vNi;
 
 #define M_PI   3.141592653589793
 
@@ -44,7 +45,11 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 		G = min( 1.0, min( (2.0*cosTm*doton)/dotom, (2.0*cosTm*dotin)/dotim ));
 	}
 
-	float D = exp(-tanTm2/(2.0*sigma2))/(M_PI*sigma2*cosTm4);	// distribution de Beckmann
+	float D = 0.0;	// distribution de Beckmann
+	float sigCos = M_PI*sigma2*cosTm4;
+	if (sigCos!=0.0){
+		D = exp(-tanTm2/(2.0*sigma2))/sigCos;
+	}	
 
 	float fs = F*D*G/(4.0*dotin*doton);
 	return fs;
@@ -54,7 +59,6 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 
 void main(void)
 {
-	float ni = 1.5;	// indice de refraction
 	float sigma = vColor.w;
 	vec3 Li = vec3(2.0);	// Lumiere incidente
 	vec3 kd = vColor.xyz;
@@ -80,7 +84,7 @@ void main(void)
 	vec3 wi = normalize(vLightSource.xyz-point3D);
 
 	// calcul de la specularite (cook torrance)
-	vec3 CT = vec3(apply_cook_torrance(ni, sigma, wi, normalize(vec3(0.0)-point3D), N));
+	vec3 CT = vec3(apply_cook_torrance(vNi, sigma, wi, normalize(vec3(0.0)-point3D), N));
 
 	// couleur en fonction de l'intensite lumineuse
 	float cosTi = max(0.0,dot(wi,N));

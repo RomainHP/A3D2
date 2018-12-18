@@ -75,6 +75,7 @@ function handleMouseMove(event) {
 	var coeff = 2500;
 
 	if(!controlDown && !shiftDown){
+
 		rotX += degToRad(deltaY / 2);
 		rotZ += degToRad(deltaX / 2);
 
@@ -84,6 +85,7 @@ function handleMouseMove(event) {
 
 		lastMouseX = newX;
 		lastMouseY = newY;
+
 	}else if(controlDown){
 		if((lightSource[0]+deltaX/coeff) < -1.)
 			lightSource[0] = -1.;
@@ -100,22 +102,22 @@ function handleMouseMove(event) {
 			lightSource[1] -= deltaY/coeff;
 
 		Light3D.redraw();
+
 	}else if(shiftDown){
+		
 		if((Balls3D.vertices[0]+deltaX/coeff) < -1.)
-		Balls3D.vertices[0] = -1.;
+			Balls3D.vertices[0] = -1.;
 		else if((Balls3D.vertices[0]+deltaX/coeff) > 1. )
-		Balls3D.vertices[0] = 1.;
+			Balls3D.vertices[0] = 1.;
 		else
-		Balls3D.vertices[0] += deltaX/coeff;
+			Balls3D.vertices[0] += deltaX/coeff;
 
 		if((Balls3D.vertices[1]-deltaY/coeff) < -1.)
-		Balls3D.vertices[1] = -1.;
+			Balls3D.vertices[1] = -1.;
 		else if((Balls3D.vertices[1]-deltaY/coeff) > 1. )
-		Balls3D.vertices[1] = 1.;
+			Balls3D.vertices[1] = 1.;
 		else
-		Balls3D.vertices[1] -= deltaY/coeff;
-
-		Balls3D.redraw();
+			Balls3D.vertices[1] -= deltaY/coeff;
 	}
 }
 //=======================================================

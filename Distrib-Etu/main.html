@@ -13,16 +13,12 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 	<script>
-		function replay() {
-			var slider = document.getElementById("rangeNb");
-			nb = slider.value;
+		function modifyNbBalls(nb) {
 			Balls3D.initAll(nb);
 		}
 
-		function modifySigma(){
-			var sliderSigma = document.getElementById("sigma");
-			newSigma = sliderSigma.value;
-			
+		function modifyNi(newNi){
+			ni = newNi;
 		}
 
 		function resetZoom() {
@@ -33,6 +29,7 @@
 			lightSource = [0.0, 0.0, 0.5];
 			Light3D.redraw();
 		}
+
 		function change_animation_rotation() {
 			Balls3D.animationRotation = !Balls3D.animationRotation;
 			var button = document.getElementById("anime_button");
@@ -65,22 +62,16 @@
 						<tbody>
 							<tr>
 								<td>
-									<input type="range" min="1" max="200" value="50" class="form-control-range" id="rangeNb">
-									<p>Nombre de billes : <span id="displayNb"></span></p>
+									<input onchange="modifyNbBalls(this.value)" type="range" min="1" max="200" value="50" class="form-control-range" id="rangeNbBalls">
+									<p>Nombre de billes : <span id="displayNbBalls"></span></p>
 								</td>
-							</tr>
-							<tr>
-								<td><button class="btn btn-primary" onclick="modifySigma()">Changer nb billes</button></td>
 							</tr>
 							<tr>
 							<tr>
 								<td>
-									<input type="range" min="0.1" max="1.5" class="form-control-range" id="sigma">
-									<p>Sigma <span id="sigma"></span></p>
+									<input onchange="modifyNi(this.value)" type="range" min="1.0" max="2.5" step="0.1" value="1.0" class="form-control-range" id="niRange">
+									<p>Ni : <span id="ni"></span></p>
 								</td>
-							</tr>
-							<tr>
-								<td><button class="btn btn-primary" onclick="replay()">Changer sigma</button></td>
 							</tr>
 							<tr>
 								<td><button class="btn btn-secondary" onclick="change_animation_rotation()" id="anime_button">Play rotation</button></td>
@@ -107,18 +98,18 @@
 	<br><br>
 
 	<script>
-		var slider = document.getElementById("rangeNb");
-		var output = document.getElementById("displayNb");
-		output.innerHTML = slider.value;
-		slider.oninput = function() {
-			output.innerHTML = this.value;
+		var sliderNbBalls = document.getElementById("rangeNbBalls");
+		var outputNbBalls = document.getElementById("displayNbBalls");
+		outputNbBalls.innerHTML = sliderNbBalls.value;
+		sliderNbBalls.oninput = function() {
+			outputNbBalls.innerHTML = this.value;
 		}
 
-		var sliderSigma = document.getElementById("rangeNb");
-		var outputSigma = document.getElementById("displayNb");
-		outputSigma.innerHTML = sliderSigma.value;
-		sliderSigma.oninput = function() {
-			outputSigma.innerHTML = this.value;
+		var sliderNi = document.getElementById("niRange");
+		var outputNi = document.getElementById("ni");
+		outputNi.innerHTML = sliderNi.value;
+		sliderNi.oninput = function() {
+			outputNi.innerHTML = this.value;
 		}
 	</script>
 

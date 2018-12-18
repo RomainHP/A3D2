@@ -5,6 +5,7 @@ var gl;
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var lightSource = [0.0,0.0,0.5];
+var ni = 1.5;
 var lightSourceDeltaX = 0.0;
 var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
@@ -57,9 +58,9 @@ Light3D.setShadersParams = function()
 Light3D.draw = function()
 {
 	if(this.shader) {		
-			this.setShadersParams();
-			setMatrixUniforms(this);
-			gl.drawArrays(gl.POINTS, 0, this.lBuffer.numItems);	
+		this.setShadersParams();
+		setMatrixUniforms(this);
+		gl.drawArrays(gl.POINTS, 0, this.lBuffer.numItems);	
 	}
 }
 
@@ -73,7 +74,6 @@ var Plane3D = { fname:'plane', loaded:-1, shader:null };
 // =====================================================
 Plane3D.initAll = function()
 {
-
 	vertices = [
 		// Face avant du plan
 		-0.7, -0.7, 0.0,
@@ -200,7 +200,7 @@ Balls3D.initAll = function(nbBilles = 50)
 		return randomColor;
 	}
 
-	colors = randomColors(nbBilles);
+	this.colors = randomColors(nbBilles);
 
 	//========================================================================
 	//Remplissage des vitesses initiales des billes
@@ -219,22 +219,6 @@ Balls3D.initAll = function(nbBilles = 50)
 	this.speed = initSpeed(nbBilles);
 
 	//========================================================================
-	//Remplissage des normales initiales des billes
-	function initNormals(nbBilles){
-		var initNormal = [];
-
-		for(var i=0;i<nbBilles;i++){
-			initNormal.push(0.0);
-			initNormal.push(0.0);
-			initNormal.push(1.0);
-		}
-
-		return initNormal;
-	}
-
-	normals = initNormals(nbBilles);
-
-	//========================================================================
 
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
@@ -244,15 +228,9 @@ Balls3D.initAll = function(nbBilles = 50)
 
 	this.cBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
 	this.cBuffer.itemSize = 4;
 	this.cBuffer.numItems = nbBilles;
-
-	this.nBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-	this.nBuffer.itemSize = 3;
-	this.nBuffer.numItems = nbBilles;
 
 	console.log("Balls3D : init buffers ok.");
 
@@ -260,17 +238,6 @@ Balls3D.initAll = function(nbBilles = 50)
 
 	console.log("Balls3D : shaders loading...");
 }
-// =====================================================
-Balls3D.redraw = function()
-{
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-}
-
 
 // =====================================================
 Balls3D.setShadersParams = function()
@@ -290,12 +257,6 @@ Balls3D.setShadersParams = function()
 	gl.enableVertexAttribArray(this.shader.cAttrib);
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
 	gl.vertexAttribPointer(this.shader.cAttrib,this.cBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	// Vertex Normal
-	this.shader.nAttrib = gl.getAttribLocation(this.shader, "aVertexNormal");
-	gl.enableVertexAttribArray(this.shader.nAttrib);
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
-	gl.vertexAttribPointer(this.shader.nAttrib,this.nBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
@@ -460,8 +421,6 @@ function initGL(canvas)
 	}
 }
 
-
-
 // =====================================================
 function loadShaders(Obj3D) {
 	loadShaderText(Obj3D,'.vs');
@@ -529,9 +488,6 @@ function compileShaders(Obj3D)
 	console.log("Compilation performed for ("+Obj3D.fname+") shader");
 }
 
-
-
-
 // =====================================================
 function setMatrixUniforms(Obj3D) {
 		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
@@ -539,7 +495,7 @@ function setMatrixUniforms(Obj3D) {
 		mat4.translate(mvMatrix, [0.0, 0.0, -2.0 + deltaZoom]);
 		mat4.multiply(mvMatrix, objMatrix);
 		
-		gl.uniform3fv(Obj3D.shader.lightSourceUniform, lightSource);
+		gl.uniform4fv(Obj3D.shader.lightSourceUniform, [lightSource[0], lightSource[1],lightSource[2], ni]);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
 }
