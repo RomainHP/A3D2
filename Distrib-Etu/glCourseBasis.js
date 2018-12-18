@@ -204,20 +204,8 @@ Balls3D.initAll = function(nbBilles = 50)
 
 	//========================================================================
 	//Remplissage des vitesses initiales des billes
-	function initSpeed(nbBilles){
-		var initSpeed = [];
-
-		for(var i=0;i<nbBilles;i++){
-			initSpeed.push(0.0);
-			initSpeed.push(0.0);
-			initSpeed.push(0.0);
-		}
-
-		return initSpeed;
-	}
-
-	this.speed = initSpeed(nbBilles);
-
+	this.speed = new Array(nbBilles*3).fill(0.0);
+	
 	//========================================================================
 
 	this.vBuffer = gl.createBuffer();
