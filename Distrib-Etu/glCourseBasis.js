@@ -325,25 +325,23 @@ Balls3D.calculForces = function()
 	for (var i = 0; i < this.vBuffer.numItems; i++) {
 		// test des collisions entre ball
 		for (var k = i+1; k < this.vBuffer.numItems; k++){
-			if(k != movingball){
-				radiusA = this.vertices[i*4+3];
-				radiusB = this.vertices[k*4+3];
-				AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
-				normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
-				distance = radiusA + radiusB - normAB;
-				if (distance>0){ // collision
-					fx = ressort * distance * (-AB[0]/normAB);
-					fy = ressort * distance * (-AB[1]/normAB);
-					fz = ressort * distance * (-AB[2]/normAB);
-					// forces sur A
-					forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
-					forces[i*3+1] += fy * (radiusB/radiusA);
-					forces[i*3+2] += fz * (radiusB/radiusA);
-					// forces sur B
-					forces[k*3]   -= fx * (radiusA/radiusB);
-					forces[k*3+1] -= fy * (radiusA/radiusB);
-					forces[k*3+2] -= fz * (radiusA/radiusB);
-				}
+			radiusA = this.vertices[i*4+3];
+			radiusB = this.vertices[k*4+3];
+			AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
+			normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
+			distance = radiusA + radiusB - normAB;
+			if (distance>0){ // collision
+				fx = ressort * distance * (-AB[0]/normAB);
+				fy = ressort * distance * (-AB[1]/normAB);
+				fz = ressort * distance * (-AB[2]/normAB);
+				// forces sur A
+				forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
+				forces[i*3+1] += fy * (radiusB/radiusA);
+				forces[i*3+2] += fz * (radiusB/radiusA);
+				// forces sur B
+				forces[k*3]   -= fx * (radiusA/radiusB);
+				forces[k*3+1] -= fy * (radiusA/radiusB);
+				forces[k*3+2] -= fz * (radiusA/radiusB);
 			}
 		}
 	}
