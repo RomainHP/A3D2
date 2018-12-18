@@ -4,12 +4,13 @@ var gl;
 // =====================================================
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
-var lightSource = [0.0,0.0,0.5];
-var ni = 1.5;
+var lightSource = [0.0,0.0,0.5];	// position de la source de lumiere
+var ni = 1.5;	// coefficient de refraction
 var lightSourceDeltaX = 0.0;
 var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
 var deltaZoom = 0.0;
+var lightColor = [1.0,1.0,1.0];		// couleur de la source de lumiere
 
 var gravity = 9.81;
 // =====================================================
@@ -146,10 +147,10 @@ Plane3D.setShadersParams = function()
 Plane3D.draw = function()
 {
 	if(this.shader) {		
-			this.setShadersParams();
-			setMatrixUniforms(this);
-			gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
-			gl.drawArrays(gl.LINE_LOOP, 0, this.vBuffer.numItems);
+		this.setShadersParams();
+		setMatrixUniforms(this);
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
+		gl.drawArrays(gl.LINE_LOOP, 0, this.vBuffer.numItems);
 	}
 }
 
@@ -249,6 +250,7 @@ Balls3D.setShadersParams = function()
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
 	this.shader.lightSourceUniform = gl.getUniformLocation(this.shader, "uLightSource");
+	this.shader.lightColorUniform = gl.getUniformLocation(this.shader, "uLightColor");
 
 	console.log("Balls3D : parameters ok.")
 }
@@ -482,7 +484,8 @@ function setMatrixUniforms(Obj3D) {
 		mat4.identity(mvMatrix);
 		mat4.translate(mvMatrix, [0.0, 0.0, -2.0 + deltaZoom]);
 		mat4.multiply(mvMatrix, objMatrix);
-		
+
+		gl.uniform3fv(Obj3D.shader.lightColorUniform, lightColor);
 		gl.uniform4fv(Obj3D.shader.lightSourceUniform, [lightSource[0], lightSource[1],lightSource[2], ni]);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);

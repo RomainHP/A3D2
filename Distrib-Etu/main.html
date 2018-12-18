@@ -21,6 +21,20 @@
 			ni = newNi;
 		}
 
+		function hexToRgb(hex) {
+				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+				return result ? {
+						r: parseInt(result[1], 16),
+						g: parseInt(result[2], 16),
+						b: parseInt(result[3], 16)
+				} : null;
+		}
+
+		function modifyLightColor(color){
+			rgbColor = hexToRgb(color);
+			lightColor = [rgbColor.r/255.0, rgbColor.g/255.0, rgbColor.b/255.0];
+		}
+
 		function resetZoom() {
 			deltaZoom = 0.0;
 		}
@@ -71,6 +85,12 @@
 								<td>
 									<input onchange="modifyNi(this.value)" type="range" min="1.0" max="2.5" step="0.1" value="1.0" class="form-control-range" id="niRange">
 									<p>Ni : <span id="ni"></span></p>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<p>Couleur de la lumiere :</p>
+									<input onchange="modifyLightColor(this.value)" type="color" id="head" name="head" value="#ffffff">
 								</td>
 							</tr>
 							<tr>
