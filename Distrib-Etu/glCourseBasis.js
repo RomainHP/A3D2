@@ -6,6 +6,7 @@ var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var lightSource = [0.0,0.0,0.5];	// position de la source de lumiere
 var ni = 1.5;	// coefficient de refraction
+var ks = 0.5;	// coefficient de specularite
 var lightSourceDeltaX = 0.0;
 var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
@@ -195,7 +196,7 @@ Balls3D.initAll = function(nbBilles = 50)
 			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
 			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
 			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0001 - 0.3) + 0.3));
+			randomColor.push((Math.random() * (0.0001 - 0.3) + 0.3));	// correspond a sigma
 		}
 
 		return randomColor;
@@ -262,6 +263,7 @@ Balls3D.setShadersParams = function()
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
 	this.shader.lightSourceUniform = gl.getUniformLocation(this.shader, "uLightSource");
+	this.shader.brdfParamsUniform = gl.getUniformLocation(this.shader, "uBrdfParams");
 	this.shader.lightColorUniform = gl.getUniformLocation(this.shader, "uLightColor");
 
 	console.log("Balls3D : parameters ok.")
@@ -498,7 +500,8 @@ function setMatrixUniforms(Obj3D) {
 		mat4.multiply(mvMatrix, objMatrix);
 
 		gl.uniform3fv(Obj3D.shader.lightColorUniform, lightColor);
-		gl.uniform4fv(Obj3D.shader.lightSourceUniform, [lightSource[0], lightSource[1],lightSource[2], ni]);
+		gl.uniform2fv(Obj3D.shader.brdfParamsUniform, [ni, ks]);
+		gl.uniform3fv(Obj3D.shader.lightSourceUniform, lightSource);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
 }

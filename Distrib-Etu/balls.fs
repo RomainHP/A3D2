@@ -5,6 +5,7 @@ varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
 varying float vNi;
+varying float vKs;
 varying vec3 vLightColor;
 
 #define M_PI   3.141592653589793
@@ -89,7 +90,7 @@ void main(void)
 
 	// couleur en fonction de l'intensite lumineuse
 	float cosTi = max(0.0,dot(wi,N));
-	vec3 Lo = Li * (kd/M_PI + ks*CT) * cosTi;	// lambert + cook torrance
+	vec3 Lo = Li * (kd/M_PI + vKs*CT) * cosTi;	// lambert + cook torrance
 	gl_FragColor = vec4(Lo,1.0);
 }
 

@@ -105,19 +105,9 @@ function handleMouseMove(event) {
 
 	}else if(shiftDown){
 		
-		if((Balls3D.vertices[0]+deltaX/coeff) < -1.)
-			Balls3D.vertices[0] = -1.;
-		else if((Balls3D.vertices[0]+deltaX/coeff) > 1. )
-			Balls3D.vertices[0] = 1.;
-		else
-			Balls3D.vertices[0] += deltaX/coeff;
-
-		if((Balls3D.vertices[1]-deltaY/coeff) < -1.)
-			Balls3D.vertices[1] = -1.;
-		else if((Balls3D.vertices[1]-deltaY/coeff) > 1. )
-			Balls3D.vertices[1] = 1.;
-		else
-			Balls3D.vertices[1] -= deltaY/coeff;
+		coeff = 500;
+		Balls3D.speed[0] += deltaX/coeff;
+		Balls3D.speed[1] -= deltaY/coeff;
 	}
 }
 //=======================================================

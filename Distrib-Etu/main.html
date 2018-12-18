@@ -21,6 +21,10 @@
 			ni = newNi;
 		}
 
+		function modifyKs(newKs){
+			ks = newKs;
+		}
+
 		function hexToRgb(hex) {
 				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 				return result ? {
@@ -88,6 +92,12 @@
 								</td>
 							</tr>
 							<tr>
+									<td>
+										<input onchange="modifyKs(this.value)" type="range" min="0.0" max="2.0" step="0.1" value="0.5" class="form-control-range" id="ksRange">
+										<p>Ks : <span id="ks"></span></p>
+									</td>
+							</tr>
+							<tr>
 								<td>
 									<p>Couleur de la lumiere :</p>
 									<input onchange="modifyLightColor(this.value)" type="color" id="head" name="head" value="#ffffff">
@@ -118,6 +128,7 @@
 	<br><br>
 
 	<script>
+		// texte pour slider correspondant au nombre de balles
 		var sliderNbBalls = document.getElementById("rangeNbBalls");
 		var outputNbBalls = document.getElementById("displayNbBalls");
 		outputNbBalls.innerHTML = sliderNbBalls.value;
@@ -125,11 +136,20 @@
 			outputNbBalls.innerHTML = this.value;
 		}
 
+		// texte pour slider correspondant a ni
 		var sliderNi = document.getElementById("niRange");
 		var outputNi = document.getElementById("ni");
 		outputNi.innerHTML = sliderNi.value;
 		sliderNi.oninput = function() {
 			outputNi.innerHTML = this.value;
+		}
+
+		// texte pour slider correspondant au ks
+		var sliderKs = document.getElementById("ksRange");
+		var outputKs = document.getElementById("ks");
+		outputKs.innerHTML = sliderKs.value;
+		sliderKs.oninput = function() {
+			outputKs.innerHTML = this.value;
 		}
 	</script>
 
