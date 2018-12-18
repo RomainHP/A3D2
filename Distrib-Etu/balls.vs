@@ -4,12 +4,14 @@ attribute vec4 aColor;
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 uniform vec4 uLightSource;
+uniform vec3 uLightColor;
 
 varying vec4 vColor;
 varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
 varying float vNi;
+varying vec3 vLightColor;
 
 void main(void) {
 	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
@@ -19,4 +21,5 @@ void main(void) {
 	vCoords = uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
 	vRadius = aVertexPosition.w;
 	vNi = uLightSource.w;
+	vLightColor = uLightColor;
 }

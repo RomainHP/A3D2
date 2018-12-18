@@ -5,6 +5,7 @@ varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
 varying float vNi;
+varying vec3 vLightColor;
 
 #define M_PI   3.141592653589793
 
@@ -60,7 +61,7 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 void main(void)
 {
 	float sigma = vColor.w;
-	vec3 Li = vec3(2.0);	// Lumiere incidente
+	vec3 Li = vLightColor * 3.0;	// Lumiere incidente
 	vec3 kd = vColor.xyz;
 	float ks = 0.5;
 
