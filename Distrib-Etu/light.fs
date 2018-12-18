@@ -1,7 +1,5 @@
 precision mediump float;
 
-varying vec4 vCoords;
-
 void main(void)
 {
 	vec2 pos = gl_PointCoord; // [0, 1]

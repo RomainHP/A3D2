@@ -42,8 +42,6 @@ Light3D.redraw = function()
 // =====================================================
 Light3D.setShadersParams = function()
 {
-	console.log("Plane3D : setting shader parameters...")
-
 	gl.useProgram(this.shader);
 
 	this.shader.lAttrib = gl.getAttribLocation(this.shader, "aLightSource");
@@ -265,6 +263,17 @@ Balls3D.initAll = function(nbBilles = 50)
 
 	console.log("Balls3D : shaders loading...");
 }
+// =====================================================
+Balls3D.redraw = function()
+{
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+}
+
 
 // =====================================================
 Balls3D.setShadersParams = function()
@@ -310,7 +319,7 @@ Balls3D.draw = function()
 }
 
 // =====================================================
-Balls3D.calculForces = function()
+Balls3D.calculForces = function(movingball)
 {
 	// Vecteurs forces des balls
 	forces = Array(3*this.vBuffer.numItems).fill(0);
@@ -319,23 +328,25 @@ Balls3D.calculForces = function()
 	for (var i = 0; i < this.vBuffer.numItems; i++) {
 		// test des collisions entre ball
 		for (var k = i+1; k < this.vBuffer.numItems; k++){
-			radiusA = this.vertices[i*4+3];
-			radiusB = this.vertices[k*4+3];
-			AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
-			normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
-			distance = radiusA + radiusB - normAB;
-			if (distance>0){ // collision
-				fx = ressort * distance * (-AB[0]/normAB);
-				fy = ressort * distance * (-AB[1]/normAB);
-				fz = ressort * distance * (-AB[2]/normAB);
-				// forces sur A
-				forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
-				forces[i*3+1] += fy * (radiusB/radiusA);
-				forces[i*3+2] += fz * (radiusB/radiusA);
-				// forces sur B
-				forces[k*3]   -= fx * (radiusA/radiusB);
-				forces[k*3+1] -= fy * (radiusA/radiusB);
-				forces[k*3+2] -= fz * (radiusA/radiusB);
+			if(k != movingball){
+				radiusA = this.vertices[i*4+3];
+				radiusB = this.vertices[k*4+3];
+				AB = [this.vertices[k*4]-this.vertices[i*4], this.vertices[k*4+1]-this.vertices[i*4+1], this.vertices[k*4+2]-this.vertices[i*4+2]];
+				normAB = Math.sqrt(AB[0]*AB[0] + AB[1]*AB[1] + AB[2]*AB[2]);
+				distance = radiusA + radiusB - normAB;
+				if (distance>0){ // collision
+					fx = ressort * distance * (-AB[0]/normAB);
+					fy = ressort * distance * (-AB[1]/normAB);
+					fz = ressort * distance * (-AB[2]/normAB);
+					// forces sur A
+					forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
+					forces[i*3+1] += fy * (radiusB/radiusA);
+					forces[i*3+2] += fz * (radiusB/radiusA);
+					// forces sur B
+					forces[k*3]   -= fx * (radiusA/radiusB);
+					forces[k*3+1] -= fy * (radiusA/radiusB);
+					forces[k*3+2] -= fz * (radiusA/radiusB);
+				}
 			}
 		}
 	}
@@ -351,7 +362,7 @@ Balls3D.animate = function()
 		ressort= 10.0;
 		// boucle pas de temps
 		for (var j = 0; j < nbPasTemps; j++) {
-			forces = this.calculForces();
+			forces = this.calculForces(2);
 			// boucle sur les objets
 			for (var i = 0; i < this.vBuffer.numItems; i++) {
 				// rayon et masse
