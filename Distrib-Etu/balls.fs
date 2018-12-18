@@ -9,26 +9,44 @@ varying float vRadius;
 
 //========================================================================
 
-vec3 apply_lambert(vec3 li, vec3 kd, vec3 light, vec3 wi)
+float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 {
-	float cosTheta = dot(light,wi);
-	// formule de lambert
-	vec3 l0 = li * (kd/M_PI) * cosTheta;
-	return l0;
-}
+	vec3 m = normalize(wi+wo);	// vecteur au milieu de wo et wi
+	float sigma2 = sigma*sigma;
+	float ni2 = ni * ni;
 
-//========================================================================
+	float dotin = max(0.0,dot(wi,N));
+	float doton = max(0.0,dot(wo,N));
+	float dotom = max(0.0,dot(wo,m));
 
-// diapo 31 du cours
-float apply_cook_torrance(float ni, float sigma, vec3 wo, vec3 wi, vec3 normal)
-{
-	vec3 m = (wi+wo)/abs(wi+wo);
-	float c = dot(wi,normal);
-	float g2 = sqrt(ni*ni + c*c - 1.0);
-	float f = 0.5 * pow(g2-c,2.0)/pow(g2+c,2.0) * (1.0 + (pow(c*(g2+c)-1.0,2.0)/pow(c*(g2-c)+1.0,2.0)));
-	float d = ((sigma+2.0)/M_PI)*0.5*pow(dot((wi + wo),normal),sigma);
-	float g = min(1.0, min((2.0*dot(normal,m)*dot(normal,wo))/dot(wo,m), (2.0*dot(normal,m)*dot(normal,wi))/dot(wi,m)));
-	float fs = (d*g*f) / (4.0 * dot(wi,normal) * dot(wo,normal));
+	float dotim = max(0.0,dot(wi,m));
+	float dotim2 = dotim * dotim;
+
+	float cosTm = max(0.0,dot(N,m));
+	float cosTm2 = cosTm*cosTm;
+	float cosTm4 = cosTm2*cosTm2;
+
+	float tanTm2 = (1.0-cosTm2)/cosTm2;
+
+	float g = sqrt(ni2 + dotim2 - 1.0);
+	float gpc = g + dotim;
+	float gmc = g - dotim;
+	float cgpc = dotim * gpc - 1.0;
+	float cgmc = dotim * gmc + 1.0;
+
+	float F = 0.0;	// facteur de fresnel
+	if (gpc!=0.0 && cgmc!=0.0){
+		F = (gmc*gmc)/(2.0*gpc*gpc) * (1.0 + (cgpc*cgpc)/(cgmc*cgmc));
+	}
+	
+	float G = 0.0;	// ombrage et masquage
+	if (dotom!=0.0 && dotim!=0.0) {
+		G = min( 1.0, min( (2.0*cosTm*doton)/dotom, (2.0*cosTm*dotin)/dotim ));
+	}
+
+	float D = exp(-tanTm2/(2.0*sigma2))/(M_PI*sigma2*cosTm4);	// distribution de Beckmann
+
+	float fs = F*D*G/(4.0*dotin*doton);
 	return fs;
 }
 
@@ -37,7 +55,10 @@ float apply_cook_torrance(float ni, float sigma, vec3 wo, vec3 wi, vec3 normal)
 void main(void)
 {
 	float ni = 1.5;	// indice de refraction
-	vec3 lightIntensity = vec3(2.0);
+	float sigma = vColor.w;
+	vec3 Li = vec3(2.0);	// Lumiere incidente
+	vec3 kd = vColor.xyz;
+	float ks = 0.5;
 
 	vec2 pos = gl_PointCoord; // [0, 1]
 
@@ -49,18 +70,23 @@ void main(void)
 	// calcul de la normale
 	float z = sqrt((0.5*0.5) - dist);
 	vec3 ps = vec3(pos.x,pos.y,z);	// coordonnees du point dans le fragment
-	vec3 n = normalize(ps-vec3(0.5,0.5,0.0));
-	n.y = - n.y;	// inversion de l'axe y car le repere camera est un repere main gauche
+	vec3 N = normalize(ps-vec3(0.5,0.5,0.0));
+	N.y = - N.y;	// inversion de l'axe y car le repere camera est un repere main gauche
 
 	// point dans le repere 3D
-	vec3 point3D = vCoords.xyz + vRadius * n;
+	vec3 point3D = vCoords.xyz + vRadius * N;
 
 	// calcul de la lumiere
-	vec3 light = normalize(vLightSource.xyz-point3D);
+	vec3 wi = normalize(vLightSource.xyz-point3D);
 
-	vec3 l0 = apply_lambert(lightIntensity, vColor.xyz, light, n);
-	float fs = apply_cook_torrance(ni, vColor.w, light, light, n);
+	// calcul de la specularite (cook torrance)
+	vec3 CT = vec3(apply_cook_torrance(ni, sigma, wi, normalize(vec3(0.0)-point3D), N));
 
 	// couleur en fonction de l'intensite lumineuse
-	gl_FragColor = vec4(l0, 1.0);
+	float cosTi = max(0.0,dot(wi,N));
+	vec3 Lo = Li * (kd/M_PI + ks*CT) * cosTi;	// lambert + cook torrance
+	gl_FragColor = vec4(Lo,1.0);
 }
+
+
+
