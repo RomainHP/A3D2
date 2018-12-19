@@ -1,4 +1,3 @@
-
 // =====================================================
 var gl;
 // =====================================================
@@ -168,42 +167,8 @@ Balls3D.animationRotation = false;
 // =====================================================
 Balls3D.initAll = function(nbBilles = 50)
 {
-	//========================================================================
-	//Remplissage aléatoire des positions de départ 
-	function initRandomPos(nbBilles) {
-		
-		var random = [];
-
-		//Remplissage de la position en x,y,z et du rayon en w
-		for(var i=0;i<nbBilles;i++){
-			radius = (Math.random() * (0.04 - 0.10) + 0.10);
-			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
-			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
-			random.push((Math.random() * (0.0 - 0.4) + 0.4));
-			random.push(radius);
-		}
-
-		return random;
-	}
-
-	this.vertices = initRandomPos(nbBilles);
-
-	//========================================================================
-	//Remplissage aléatoire des couleurs des billes
-	function randomColors(nbBilles){
-		var randomColor = [];
-
-		for(var i=0;i<nbBilles;i++){
-			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0001 - 0.3) + 0.3));	// correspond a sigma
-		}
-
-		return randomColor;
-	}
-
-	this.colors = randomColors(nbBilles);
+	this.vertices = initRandomBallsPosition(nbBilles);
+	this.colors = initRandomBallsColors(nbBilles);
 
 	//========================================================================
 	//Remplissage des vitesses initiales des billes
@@ -228,6 +193,37 @@ Balls3D.initAll = function(nbBilles = 50)
 	loadShaders(this);
 
 	console.log("Balls3D : shaders loading...");
+}
+
+// =====================================================
+Balls3D.redraw = function(nbBilles)
+{
+	var oldNb = this.vBuffer.numItems;
+
+	if (oldNb != nbBilles && nbBilles>=0){
+
+		if (oldNb < nbBilles) {
+			// while (this.vertices.length > nbBilles){
+			// 	this.vertices.push(randomBallPosition());
+			// 	this.vertices.push(randomBallColor());
+			// }
+			alert("test");
+		} else {
+			//this.vertices.slice(0,nbBilles);
+
+			alert(oldNb);
+		}
+
+		// gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+		// this.vBuffer.numItems = nbBilles;
+
+		// gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
+		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
+		// this.cBuffer.numItems = nbBilles;
+	}
+
+	
 }
 
 // =====================================================
