@@ -77,7 +77,6 @@ function handleMouseMove(event) {
 			newDelta[i] += objMatrix[i*4+j]*delta[j];
 		}
 	}
-	var coeff = 2500;
 
 	if(!controlDown && !shiftDown){
 
@@ -92,17 +91,17 @@ function handleMouseMove(event) {
 		lastMouseY = newY;
 
 	}else if(controlDown){
-		//mouvement source
-		lightSource[0] += newDelta[0]/newDelta[3]/10;
-		lightSource[1] += newDelta[1]/newDelta[3]/10;
-		lightSource[2] += newDelta[2]/newDelta[3]/10;
+		// mouvement de la source de lumiere
+		lightSource[0] += newDelta[0]/newDelta[3]/300;
+		lightSource[1] += newDelta[1]/newDelta[3]/300;
+		lightSource[2] += newDelta[2]/newDelta[3]/300;
 		Light3D.redraw();
 
 	}else if(shiftDown){
-		//mouvement bille
-		Ball3D.speed[0] += newDelta[0]/newDelta[3]/300;
-		Ball3D.speed[1] += newDelta[1]/newDelta[3]/300;
-		Ball3D.speed[2] += newDelta[2]/newDelta[3]/300;
+		// mouvement de la premiere bille
+		Balls3D.speed[0] += newDelta[0]/newDelta[3]/300;
+		Balls3D.speed[1] += newDelta[1]/newDelta[3]/300;
+		Balls3D.speed[2] += newDelta[2]/newDelta[3]/300;
 	}
 }
 //=======================================================
