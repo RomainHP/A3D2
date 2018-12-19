@@ -25,6 +25,10 @@
 			ks = newKs;
 		}
 
+		function modifyModeBrdf(newMode){
+			modeBrdf = newMode;
+		}
+
 		function hexToRgb(hex) {
 				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 				return result ? {
@@ -101,6 +105,14 @@
 								<td>
 									<p>Couleur de la lumiere :</p>
 									<input onchange="modifyLightColor(this.value)" type="color" id="head" name="head" value="#ffffff">
+								</td>
+							</tr>
+							<tr>
+								<td>
+										<p>BRDF :</p>
+										<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="0"> Sans<br>
+										<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="1"> Lambert<br>
+										<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="2" checked="checked"> Lambert + Cook-Torrance
 								</td>
 							</tr>
 							<tr>

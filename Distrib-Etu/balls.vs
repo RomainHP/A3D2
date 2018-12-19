@@ -5,24 +5,28 @@ uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 uniform vec3 uLightSource;
 uniform vec3 uLightColor;
-uniform vec2 uBrdfParams;
+uniform vec3 uBrdfParams;
 
-varying vec4 vColor;
+varying vec3 vColor;
 varying vec4 vLightSource;
 varying vec4 vCoords;
 varying float vRadius;
 varying float vNi;
 varying float vKs;
+varying float vSigma;
+varying float vModeBrdf;
 varying vec3 vLightColor;
 
 void main(void) {
 	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
 	gl_PointSize = 800.0*uPMatrix[0][0]*aVertexPosition.w/gl_Position.w;
-	vColor = aColor;
+	vColor = aColor.xyz;
 	vLightSource = uMVMatrix * vec4(uLightSource, 1.0);
 	vCoords = uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
 	vRadius = aVertexPosition.w;
 	vNi = uBrdfParams.x;
 	vKs = uBrdfParams.y;
+	vSigma = aColor.w;
+	vModeBrdf = uBrdfParams.z;
 	vLightColor = uLightColor;
 }

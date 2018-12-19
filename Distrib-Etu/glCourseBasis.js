@@ -7,6 +7,7 @@ var pMatrix = mat4.create();
 var lightSource = [0.0,0.0,0.5];	// position de la source de lumiere
 var ni = 1.5;	// coefficient de refraction
 var ks = 0.5;	// coefficient de specularite
+var modeBrdf = 2.0;	// choix du type de brdf (0:sans / 1:lambert / 2:lambert+cook-torrance)
 var lightSourceDeltaX = 0.0;
 var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
@@ -488,7 +489,7 @@ function setMatrixUniforms(Obj3D) {
 		mat4.multiply(mvMatrix, objMatrix);
 
 		gl.uniform3fv(Obj3D.shader.lightColorUniform, lightColor);
-		gl.uniform2fv(Obj3D.shader.brdfParamsUniform, [ni, ks]);
+		gl.uniform3fv(Obj3D.shader.brdfParamsUniform, [ni, ks, modeBrdf]);
 		gl.uniform3fv(Obj3D.shader.lightSourceUniform, lightSource);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
