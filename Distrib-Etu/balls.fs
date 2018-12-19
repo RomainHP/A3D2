@@ -91,9 +91,6 @@ void main(void)
 		// calcul de la lumiere
 		vec3 wi = normalize(vLightSource.xyz-point3D);
 
-		// calcul de la specularite (cook torrance)
-		vec3 CT = vec3(apply_cook_torrance(vNi, vSigma, wi, normalize(vec3(0.0)-point3D), N));
-
 		// couleur en fonction de l'intensite lumineuse
 		float cosTi = max(0.0,dot(wi,N));
 

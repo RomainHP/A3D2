@@ -70,6 +70,13 @@ function handleMouseMove(event) {
 
 	var deltaX = newX - lastMouseX;
 	var deltaY = newY - lastMouseY;
+	var delta = [deltaX,-deltaY,0,1];
+	var newDelta = [0,0,0,0];
+	for(i=0;i<4;i++){
+		for(j=0;j<4;j++){
+			newDelta[i] += objMatrix[i*4+j]*delta[j];
+		}
+	}
 	var coeff = 2500;
 
 	if(!controlDown && !shiftDown){
@@ -85,27 +92,17 @@ function handleMouseMove(event) {
 		lastMouseY = newY;
 
 	}else if(controlDown){
-		if((lightSource[0]+deltaX/coeff) < -1.)
-			lightSource[0] = -1.;
-		else if((lightSource[0]+deltaX/coeff) > 1. )
-			lightSource[0] = 1.;
-		else
-			lightSource[0] += deltaX/coeff;
-
-		if((lightSource[1]-deltaY/coeff) < -1.)
-			lightSource[1] = -1.;
-		else if((lightSource[1]-deltaY/coeff) > 1. )
-			lightSource[1] = 1.;
-		else
-			lightSource[1] -= deltaY/coeff;
-
+		//mouvement source
+		lightSource[0] += newDelta[0]/newDelta[3]/10;
+		lightSource[1] += newDelta[1]/newDelta[3]/10;
+		lightSource[2] += newDelta[2]/newDelta[3]/10;
 		Light3D.redraw();
 
 	}else if(shiftDown){
-		
-		coeff = 500;
-		Balls3D.speed[0] += deltaX/coeff;
-		Balls3D.speed[1] -= deltaY/coeff;
+		//mouvement bille
+		Ball3D.speed[0] += newDelta[0]/newDelta[3]/300;
+		Ball3D.speed[1] += newDelta[1]/newDelta[3]/300;
+		Ball3D.speed[2] += newDelta[2]/newDelta[3]/300;
 	}
 }
 //=======================================================
