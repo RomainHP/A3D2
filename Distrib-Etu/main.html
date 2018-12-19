@@ -31,12 +31,12 @@
 		}
 
 		function hexToRgb(hex) {
-				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-				return result ? {
-						r: parseInt(result[1], 16),
-						g: parseInt(result[2], 16),
-						b: parseInt(result[3], 16)
-				} : null;
+			var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+			return result ? {
+					r: parseInt(result[1], 16),
+					g: parseInt(result[2], 16),
+					b: parseInt(result[3], 16)
+			} : null;
 		}
 
 		function modifyLightColor(color){
@@ -53,13 +53,23 @@
 			Light3D.redraw();
 		}
 
-		function change_animation_rotation() {
+		function change_animation_inclinaison() {
 			Balls3D.animationRotation = !Balls3D.animationRotation;
-			var button = document.getElementById("anime_button");
+			var button = document.getElementById("anime_inclinaison_button");
 			if (Balls3D.animationRotation) {
-				button.innerText = "Stop rotation";
+				button.innerText = "Stop animation inclinaison";
 			} else {
-				button.innerText = "Play rotation";
+				button.innerText = "Play animation inclinaison";
+			}
+		}
+
+		function change_animation() {
+			Balls3D.animation = !Balls3D.animation;
+			var button = document.getElementById("anime_button");
+			if (Balls3D.animation) {
+				button.innerText = "Stop";
+			} else {
+				button.innerText = "Play";
 			}
 		}
 	</script>
@@ -85,6 +95,17 @@
 						<tbody>
 							<tr>
 								<td>
+									Animation :
+									<button class="btn btn-primary" onclick="change_animation()" id="anime_button">Play</button>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<button class="btn btn-secondary" onclick="change_animation_inclinaison()" id="anime_inclinaison_button">Play animation rotation</button>
+								</td>
+							</tr>
+							<tr>
+								<td>
 									<input onchange="modifyNbBalls(this.value)" type="range" min="1" max="200" value="50" class="form-control-range" id="rangeNbBalls">
 									<p>Nombre de billes : <span id="displayNbBalls"></span></p>
 								</td>
@@ -107,14 +128,11 @@
 							<tr>
 								<td>
 									<p>Parametres BRDF :</p>
-									<input onchange="modifyNi(this.value)" type="range" min="1.0" max="2.5" step="0.1" value="1.0" class="form-control-range" id="niRange">
+									<input onchange="modifyNi(this.value)" type="range" min="1.0" max="2.5" step="0.1" value="1.5" class="form-control-range" id="niRange">
 									<p>Ni : <span id="ni"></span></p>
 									<input onchange="modifyKs(this.value)" type="range" min="0.0" max="2.0" step="0.1" value="0.5" class="form-control-range" id="ksRange">
 									<p>Ks : <span id="ks"></span></p>
 								</td>
-							</tr>
-							<tr>
-								<td><button class="btn btn-secondary" onclick="change_animation_rotation()" id="anime_button">Play rotation</button></td>
 							</tr>
 							<tr>
 								<td><button class="btn btn-secondary"	onclick="resetZoom()">Reset zoom</button></td>

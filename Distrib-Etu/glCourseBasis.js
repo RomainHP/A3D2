@@ -162,7 +162,9 @@ Plane3D.draw = function()
 
 var Balls3D = { fname:'balls', loaded:-1, shader:null };
 
-Balls3D.animationRotation = false;
+Balls3D.animationRotation = false;	// animation en fonction de l'inclinaison de la camera
+
+Balls3D.animation = true;	// animation
 
 // =====================================================
 Balls3D.initAll = function(nbBilles = 50)
@@ -203,24 +205,37 @@ Balls3D.redraw = function(nbBilles)
 	if (oldNb != nbBilles && nbBilles>=0){
 
 		if (oldNb < nbBilles) {
-			// while (this.vertices.length > nbBilles){
-			// 	this.vertices.push(randomBallPosition());
-			// 	this.vertices.push(randomBallColor());
-			// }
-			alert("test");
-		} else {
-			//this.vertices.slice(0,nbBilles);
+			for (var i=0; i<nbBilles; i++){
+				if (i >= oldNb){
+					var randomPos = randomBallPosition();
+					this.vertices[i*4] = randomPos[0];
+					this.vertices[i*4+1] = randomPos[1];
+					this.vertices[i*4+2] = randomPos[2];
+					this.vertices[i*4+3] = randomPos[3];
 
-			alert(oldNb);
+
+					var randomCol = randomBallColor();
+					this.colors[i*4] = randomCol[0];
+					this.colors[i*4+1] = randomCol[1];
+					this.colors[i*4+2] = randomCol[2];
+					this.colors[i*4+3] = randomCol[3];
+
+					var newSpeed = new Array((nbBilles-oldNb)*3).fill(0.0);
+					this.speed = this.speed.concat(newSpeed);
+				} else {
+					this.speed.slice(0,nbBilles);
+				}
+			}
 		}
 
-		// gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
-		// this.vBuffer.numItems = nbBilles;
 
-		// gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
-		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
-		// this.cBuffer.numItems = nbBilles;
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+		this.vBuffer.numItems = nbBilles;
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
+		this.cBuffer.numItems = nbBilles;
 	}
 
 	
@@ -300,7 +315,7 @@ Balls3D.calculForces = function()
 // =====================================================
 Balls3D.animate = function()
 {
-	if(shadersOk()) {
+	if(shadersOk() && this.animation) {
 		nbPasTemps = 10;
 		frottement = 0.001;
 		ressort= 10.0;
