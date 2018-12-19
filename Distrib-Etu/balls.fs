@@ -20,6 +20,7 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 	float sigma2 = sigma*sigma;
 	float ni2 = ni * ni;
 
+	// dotin = cos de l'angle entre i et n
 	float dotin = max(0.0,dot(wi,N));
 	float doton = max(0.0,dot(wo,N));
 	float dotom = max(0.0,dot(wo,m));
@@ -55,7 +56,7 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 		D = exp(-tanTm2/(2.0*sigma2))/sigCos;
 	}	
 
-	float fs = F*D*G/(4.0*dotin*doton);
+	float fs = F*D*G/(4.0*dotin*doton);	// formule de cook-torrance
 	return fs;
 }
 
@@ -63,20 +64,20 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 
 void main(void)
 {
-	vec Lo = vColor;
+	vec3 Lo = vColor;	// par defaut : pas de brdf donc seulement la couleur
+
+	vec2 pos = gl_PointCoord; // [0, 1]
+
+	// si la distance avec le centre est supérieur au rayon, on ignore le fragment
+	float dist = ((0.5-pos.x)*(0.5-pos.x)+(0.5-pos.y)*(0.5-pos.y));
+	if (dist>(0.5*0.5))
+		discard;
 
 	if (vModeBrdf!=0.0) {	// si mode == 0.0 alors pas de brdf
 
 		vec3 Li = vLightColor * 3.0;	// Lumiere incidente
 		vec3 kd = vColor;
 		float ks = 0.5;
-
-		vec2 pos = gl_PointCoord; // [0, 1]
-
-		// si la distance avec le centre est supérieur au rayon, on ignore le fragment
-		float dist = ((0.5-pos.x)*(0.5-pos.x)+(0.5-pos.y)*(0.5-pos.y));
-		if (dist>(0.5*0.5))
-			discard;
 
 		// calcul de la normale
 		float z = sqrt((0.5*0.5) - dist);

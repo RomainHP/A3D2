@@ -274,7 +274,6 @@ Balls3D.calculForces = function()
 {
 	// Vecteurs forces des balls
 	forces = Array(3*this.vBuffer.numItems).fill(0);
-	forces.fill(0);
 	// bilans des forces de chaque ball
 	for (var i = 0; i < this.vBuffer.numItems; i++) {
 		// test des collisions entre ball

@@ -91,28 +91,25 @@
 							<tr>
 							<tr>
 								<td>
-									<input onchange="modifyNi(this.value)" type="range" min="1.0" max="2.5" step="0.1" value="1.0" class="form-control-range" id="niRange">
-									<p>Ni : <span id="ni"></span></p>
-								</td>
-							</tr>
-							<tr>
-									<td>
-										<input onchange="modifyKs(this.value)" type="range" min="0.0" max="2.0" step="0.1" value="0.5" class="form-control-range" id="ksRange">
-										<p>Ks : <span id="ks"></span></p>
-									</td>
-							</tr>
-							<tr>
-								<td>
 									<p>Couleur de la lumiere :</p>
 									<input onchange="modifyLightColor(this.value)" type="color" id="head" name="head" value="#ffffff">
 								</td>
 							</tr>
 							<tr>
 								<td>
-										<p>BRDF :</p>
-										<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="0"> Sans<br>
-										<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="1"> Lambert<br>
-										<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="2" checked="checked"> Lambert + Cook-Torrance
+									<p>BRDF :</p>
+									<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="0"> Sans<br>
+									<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="1"> Lambert<br>
+									<input onchange="modifyModeBrdf(this.value)" type="radio" name="gender" value="2" checked="checked"> Lambert + Cook-Torrance
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<p>Parametres BRDF :</p>
+									<input onchange="modifyNi(this.value)" type="range" min="1.0" max="2.5" step="0.1" value="1.0" class="form-control-range" id="niRange">
+									<p>Ni : <span id="ni"></span></p>
+									<input onchange="modifyKs(this.value)" type="range" min="0.0" max="2.0" step="0.1" value="0.5" class="form-control-range" id="ksRange">
+									<p>Ks : <span id="ks"></span></p>
 								</td>
 							</tr>
 							<tr>
