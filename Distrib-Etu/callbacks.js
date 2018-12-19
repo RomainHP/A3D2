@@ -110,5 +110,5 @@ function handleMouseMove(event) {
 }
 //=======================================================
 function handleScroll(event){
-	deltaZoom -= event.deltaY;
+	deltaZoom -= event.deltaY/10;
 }
