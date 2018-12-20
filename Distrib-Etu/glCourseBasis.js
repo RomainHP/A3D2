@@ -77,15 +77,15 @@ Plane3D.initAll = function()
 {
 	vertices = [
 		// Face avant du plan
-		-0.7, -0.7, 0.0,
-		 0.7, -0.7, 0.0,
-		 0.7,  0.7, 0.0,
-		-0.7,  0.7, 0.0,
+		-0.7, -1.0, 0.0,
+		 0.7, -1.0, 0.0,
+		 0.7,  1.0, 0.0,
+		-0.7,  1.0, 0.0,
 		// Face arrière du plan
-		-0.7, 0.7, 0.0,
-		 0.7,  0.7, 0.0,
-		 0.7, -0.7, 0.0,
-		-0.7,  -0.7, 0.0
+		-0.7, 1.0, 0.0,
+		 0.7,  1.0, 0.0,
+		 0.7, -1.0, 0.0,
+		-0.7,  -1.0, 0.0
 	];
 
 	texcoords = [
@@ -164,7 +164,7 @@ var Balls3D = { fname:'balls', loaded:-1, shader:null };
 Balls3D.animationRotation = false;
 
 // =====================================================
-Balls3D.initAll = function(nbBilles = 50)
+Balls3D.initAll = function(nbBilles = 16)
 {
 	//========================================================================
 	//Remplissage aléatoire des positions de départ 
@@ -172,13 +172,63 @@ Balls3D.initAll = function(nbBilles = 50)
 		
 		var random = [];
 
-		//Remplissage de la position en x,y,z et du rayon en w
-		for(var i=0;i<nbBilles;i++){
-			radius = (Math.random() * (0.04 - 0.10) + 0.10);
-			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
-			random.push((Math.random() * (-0.7 - 0.7) + 0.7));
-			random.push((Math.random() * (0.0 - 0.4) + 0.4));
-			random.push(radius);
+		// //Remplissage de la position en x,y,z et du rayon en w
+		// for(var i=0;i<nbBilles;i++){
+		// 	radius = (Math.random() * (0.04 - 0.10) + 0.10);
+		// 	random.push((Math.random() * (-0.7 - 0.7) + 0.7));
+		// 	random.push((Math.random() * (-0.7 - 0.7) + 0.7));
+		// 	random.push((Math.random() * (0.0 - 0.4) + 0.4));
+		// 	random.push(radius);
+		// }
+
+		//Billard
+		random.push(0.0);
+		random.push(-0.5);
+		random.push(0.0);
+		random.push(0.05);
+
+		var cpt = 0;
+		var radius = 0.05;
+
+		for(var i=0;i<nbBilles-1;i++){
+			if(i>=0 && i<= 4){
+				random.push(-0.2+cpt*radius*2);
+				random.push(0.6);
+				random.push(0.0);
+				random.push(radius);
+				cpt++;
+				if(i==4)
+					cpt =0;
+			}else if(i>=5 && i<= 8){
+				random.push(-0.15+cpt*radius*2);
+				random.push(0.5);
+				random.push(0.0);
+				random.push(radius);
+				cpt++;
+				if(i==8)
+					cpt =0;
+			}else if(i>=9 && i<= 11){
+				random.push(-0.1+cpt*radius*2);
+				random.push(0.4);
+				random.push(0.0);
+				random.push(radius);
+				cpt++;
+				if(i==11)
+					cpt =0;
+			}else if(i>=12 && i<=13){
+				random.push(-0.05+cpt*radius*2);
+				random.push(0.3);
+				random.push(0.0);
+				random.push(radius);
+				cpt++;
+				if(i==13)
+					cpt =0;
+			}else if(i==14){
+				random.push(0.0);
+				random.push(0.2);
+				random.push(0.0);
+				random.push(radius);
+			}
 		}
 
 		return random;
@@ -191,11 +241,23 @@ Balls3D.initAll = function(nbBilles = 50)
 	function randomColors(nbBilles){
 		var randomColor = [];
 
-		for(var i=0;i<nbBilles;i++){
-			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
-			randomColor.push((Math.random() * (0.0001 - 0.3) + 0.3));
+		// for(var i=0;i<nbBilles;i++){
+		// 	randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
+		// 	randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
+		// 	randomColor.push((Math.random() * (0.0 - 1.0) + 1.0));
+		// 	randomColor.push((Math.random() * (0.0001 - 0.3) + 0.3));
+		// }
+
+		//Billard
+		randomColor.push(1.0);
+		randomColor.push(1.0);
+		randomColor.push(1.0);
+		randomColor.push(0.005);
+		for(var i=0;i<nbBilles-1;i++){
+			randomColor.push(1.0);
+			randomColor.push(0.0);
+			randomColor.push(0.0);
+			randomColor.push(0.005);
 		}
 
 		return randomColor;
@@ -271,7 +333,6 @@ Balls3D.calculForces = function()
 {
 	// Vecteurs forces des balls
 	forces = Array(3*this.vBuffer.numItems).fill(0);
-	forces.fill(0);
 	// bilans des forces de chaque ball
 	for (var i = 0; i < this.vBuffer.numItems; i++) {
 		// test des collisions entre ball
@@ -304,7 +365,7 @@ Balls3D.animate = function()
 {
 	if(shadersOk()) {
 		nbPasTemps = 10;
-		frottement = 0.001;
+		frottement = 0.0015;
 		ressort= 10.0;
 		// boucle pas de temps
 		for (var j = 0; j < nbPasTemps; j++) {
@@ -331,35 +392,68 @@ Balls3D.animate = function()
 				x = this.vertices[i*4] + 0.001 * vx;
 				y = this.vertices[i*4+1] + 0.001 * vy;
 				z = this.vertices[i*4+2] + 0.001 * vz;
+				
+				//REBOND BILLARD
+				var inhole = false;
+				if(
+				   (x<=-0.65 	&& (y>=-0.05 && y<= 0.05)) //Milieu gauche
+				|| (x>=0.65 	&& (y>=-0.05 && y<= 0.05)) //Milieu droit
+				|| (x<=-0.65 	&& y>=0.95) //Haut gauche
+				|| (x>=0.65 	&& y>=0.95) //Haut droit
+				|| (x<=-0.65 	&& y<=-0.95) //Bas gauche
+				|| (x>=0.65 	&& y<=-0.95) //Bas droit
+				) 
+				{
+					z = -1.0;
+					vz = 0.0;
+					inhole = true;
+					alert(x + " " + y);
+				}
+				
 				// rebond
-				if (z<radius){
-					z = radius;
-					vz = - 0.9 * vz;
+				if(!inhole){
+					if (z<radius){
+						z = radius;
+						vz = - 0.9 * vz;
+					}
+					if (x<-0.7+radius){
+						x = -0.7+radius;
+						vx = - 0.9 * vx;
+					}
+					if (y<-1.0+radius){
+						y = -1.0+radius;
+						vy = - 0.9 * vy;
+					}
+					if (x>0.7-radius){
+						x = 0.7-radius;
+						vx = - 0.9 * vx;
+					}
+					if (y>1.0-radius){
+						y = 1.0-radius;
+						vy = - 0.9 * vy;
+					}
 				}
-				if (x<-0.7+radius){
-					x = -0.7+radius;
-					vx = - 0.9 * vx;
-				}
-				if (y<-0.7+radius){
-					y = -0.7+radius;
-					vy = - 0.9 * vy;
-				}
-				if (x>0.7-radius){
-					x = 0.7-radius;
-					vx = - 0.9 * vx;
-				}
-				if (y>0.7-radius){
-					y = 0.7-radius;
-					vy = - 0.9 * vy;
-				}
+
 				// affectation vitesse
-				this.speed[i*3] = vx;
-				this.speed[i*3+1] = vy;
-				this.speed[i*3+2] = vz;
+				if(!inhole){
+					this.speed[i*3] = vx;
+					this.speed[i*3+1] = vy;
+					this.speed[i*3+2] = vz;
+				}else{
+					this.speed[i*3] = 0.0;
+					this.speed[i*3+1] = 0.0;
+					this.speed[i*3+2] = vz;
+				}
 				// affectation position
-				this.vertices[i*4] = x;
-				this.vertices[i*4+1] = y;
-				this.vertices[i*4+2] = z
+				if(!inhole){
+					this.vertices[i*4] = x;
+					this.vertices[i*4+1] = y;
+					this.vertices[i*4+2] = z;
+				}else{
+					this.vertices[i*4] = 0.0;
+					this.vertices[i*4+1] = 0.0;
+					this.vertices[i*4+2] = -1.0;
+				}
 			}
 		}
 		// ajout au buffer
