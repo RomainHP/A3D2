@@ -29,6 +29,7 @@ function tick() {
 	requestAnimFrame(tick);
 	Balls3D.animate();
 	drawScene();
+	time += 1;
 }
 
 // =====================================================

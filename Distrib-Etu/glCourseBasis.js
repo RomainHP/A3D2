@@ -12,6 +12,7 @@ var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
 var deltaZoom = 0.0;
 var lightColor = [1.0,1.0,1.0];		// couleur de la source de lumiere
+var time=0;
 
 var gravity = 9.81;
 // =====================================================
@@ -167,7 +168,7 @@ Balls3D.animationRotation = false;	// animation en fonction de l'inclinaison de 
 Balls3D.animation = true;	// animation
 
 // =====================================================
-Balls3D.initAll = function(nbBilles = 50)
+Balls3D.initAll = function(nbBilles = 30)
 {
 	this.vertices = initRandomBallsPosition(nbBilles);
 	this.colors = initRandomBallsColors(nbBilles);
@@ -195,6 +196,9 @@ Balls3D.initAll = function(nbBilles = 50)
 	loadShaders(this);
 
 	console.log("Balls3D : shaders loading...");
+
+	this.modeMouvementCercle = false;
+	this.vitesseRotation = 100;
 }
 
 // =====================================================
@@ -227,7 +231,6 @@ Balls3D.redraw = function(nbBilles)
 				}
 			}
 		}
-
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
@@ -280,6 +283,15 @@ Balls3D.draw = function()
 }
 
 // =====================================================
+Balls3D.runMouvementCercle = function()
+{
+	this.modeMouvementCercle = true;
+	this.vertices[0] = 0;
+	this.vertices[1] = -0.7+this.colors[3];
+	this.vertices[2] = this.colors[3];
+}
+
+// =====================================================
 // Calcul des forces exercees sur chaque balle
 Balls3D.calculForces = function()
 {
@@ -300,9 +312,11 @@ Balls3D.calculForces = function()
 				fz = ressort * distance * (-AB[2]/normAB);
 				// forces sur A
 				radiusBA = radiusB/radiusA;
-				forces[i*3]   += fx * radiusBA; // la balle la plus lourde ressent moins de forces
-				forces[i*3+1] += fy * radiusBA;
-				forces[i*3+2] += fz * radiusBA;
+				if (i!=0){
+					forces[i*3]   += fx * radiusBA; // la balle la plus lourde ressent moins de forces
+					forces[i*3+1] += fy * radiusBA;
+					forces[i*3+2] += fz * radiusBA;
+				}
 				// forces sur B
 				radiusAB = 1 / radiusBA;
 				forces[k*3]   -= fx * radiusAB;
@@ -366,6 +380,19 @@ Balls3D.animate = function()
 				if (y>0.7-radius){
 					y = 0.7-radius;
 					vy = - 0.9 * vy;
+				}
+				// mouvement circulaire sur la balle 0 si le mode est active
+				if (i==0 && this.modeMouvementCercle){
+					var delta = [0.7-radius,0.7-radius,0,0.001];
+					var newDelta = [0,0,0,0];
+					for(k=0;k<4;k++){
+						for(l=0;l<4;l++){
+							newDelta[k] += objMatrix[k*4+l]*delta[l];
+						}
+					}
+					var w = (Math.PI*2.0)/this.vitesseRotation;
+					x = Math.cos(w*time) * newDelta[0];
+					y = Math.sin(w*time) * newDelta[1];
 				}
 				// affectation vitesse
 				this.speed[i*3] = vx;

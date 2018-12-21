@@ -18,6 +18,14 @@
 			Balls3D.redraw(nb);
 		}
 
+		function modifyVitesseRotation(nb) {
+			if (nb>50){	
+				Balls3D.vitesseRotation = nb-50;
+			} else if (nb<50) {
+				Balls3D.vitesseRotation = nb+50;
+			}
+		}
+
 		function modifyNi(newNi){
 			ni = newNi;
 		}
@@ -33,6 +41,17 @@
 		function modifyLightColor(color){
 			rgbColor = hexToRgb(color);
 			lightColor = [rgbColor.r/255.0, rgbColor.g/255.0, rgbColor.b/255.0];
+		}
+
+		function modifyModeCercle(){
+			var button = document.getElementById("button_cercle");
+			if (Balls3D.modeMouvementCercle){
+				Balls3D.modeMouvementCercle = false;
+				button.innerText = "Run Cercle";
+			} else {
+				Balls3D.runMouvementCercle();
+				button.innerText = "Stop Cercle";
+			}
 		}
 
 		function resetZoom() {
@@ -113,7 +132,7 @@
 							<tr>
 								<td>
 									<p>Couleur de la lumiere :</p>
-									<input onchange="modifyLightColor(this.value)" type="color" id="head" name="head" value="#ffffff">
+									<input oninput="modifyLightColor(this.value)" type="color" id="head" name="head" value="#ffffff">
 								</td>
 							</tr>
 							<tr>
@@ -131,6 +150,15 @@
 									<p>Ni : <span id="ni"></span></p>
 									<input onchange="modifyKs(this.value)" type="range" min="0.0" max="2.0" step="0.1" value="0.5" class="form-control-range" id="ksRange">
 									<p>Ks : <span id="ks"></span></p>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<p>Mouvement circulaire :</p>
+									<input onchange="modifyVitesseRotation(this.value)" type="range" min="1" max="100" value="50" class="form-control-range" id="vitesseRotation">
+									<p>Vitesse : <span id="displayVitesseRotation"></span></p>
+									<button class="btn btn-primary" onclick="modifyModeCercle()" id="button_cercle">Run Cercle</button>
+								</td>
 								</td>
 							</tr>
 							<tr>
@@ -164,6 +192,14 @@
 		outputNbBalls.innerHTML = sliderNbBalls.value;
 		sliderNbBalls.oninput = function() {
 			outputNbBalls.innerHTML = this.value;
+		}
+
+		// texte pour slider correspondant a la vitesse de rotation
+		var sliderVitesseRotation = document.getElementById("vitesseRotation");
+		var outputVitesseRotation = document.getElementById("displayVitesseRotation");
+		outputVitesseRotation.innerHTML = sliderVitesseRotation.value;
+		sliderVitesseRotation.oninput = function() {
+			outputVitesseRotation.innerHTML = this.value;
 		}
 
 		// texte pour slider correspondant a ni
