@@ -283,11 +283,11 @@ Balls3D.draw = function()
 // Calcul des forces exercees sur chaque balle
 Balls3D.calculForces = function()
 {
-	// Vecteurs forces des balls
+	// Vecteurs forces des balles
 	forces = Array(3*this.vBuffer.numItems).fill(0);
-	// bilans des forces de chaque ball
+	// bilans des forces de chaque balle
 	for (var i = 0; i < this.vBuffer.numItems; i++) {
-		// test des collisions entre ball
+		// test des collisions entre balle
 		for (var k = i+1; k < this.vBuffer.numItems; k++){
 			radiusA = this.vertices[i*4+3];
 			radiusB = this.vertices[k*4+3];
@@ -299,13 +299,15 @@ Balls3D.calculForces = function()
 				fy = ressort * distance * (-AB[1]/normAB);
 				fz = ressort * distance * (-AB[2]/normAB);
 				// forces sur A
-				forces[i*3]   += fx * (radiusB/radiusA); // la ball la plus lourde ressent moins de forces
-				forces[i*3+1] += fy * (radiusB/radiusA);
-				forces[i*3+2] += fz * (radiusB/radiusA);
+				radiusBA = radiusB/radiusA;
+				forces[i*3]   += fx * radiusBA; // la balle la plus lourde ressent moins de forces
+				forces[i*3+1] += fy * radiusBA;
+				forces[i*3+2] += fz * radiusBA;
 				// forces sur B
-				forces[k*3]   -= fx * (radiusA/radiusB);
-				forces[k*3+1] -= fy * (radiusA/radiusB);
-				forces[k*3+2] -= fz * (radiusA/radiusB);
+				radiusAB = 1 / radiusBA;
+				forces[k*3]   -= fx * radiusAB;
+				forces[k*3+1] -= fy * radiusAB;
+				forces[k*3+2] -= fz * radiusAB;
 			}
 		}
 	}
@@ -321,29 +323,29 @@ Balls3D.animate = function()
 		ressort= 10.0;
 		// boucle pas de temps
 		for (var j = 0; j < nbPasTemps; j++) {
-			forces = this.calculForces(2);
+			forces = this.calculForces();
 			// boucle sur les objets
 			for (var i = 0; i < this.vBuffer.numItems; i++) {
 				// rayon et masse
 				radius = this.vertices[i*4+3];
 				mass = radius*0.1;
 				// vitesse
-				vx = this.speed[i*3]   + 0.001 * (forces[i*3] / mass);
+				vx = this.speed[i*3]   + frottement * (forces[i*3] / mass);
 				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass);
-				vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - 0.001 * gravity;
+				vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - frottement * gravity;
 				// si il y a une animation en fonction de la rotation de la scene
 				if (this.animationRotation){
-					vx -= 0.001 * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
-					vy -= 0.001 * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
+					vx -= frottement * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
+					vy -= frottement * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
 				}
 				// frottement
 				vx -= frottement * vx;
 				vy -= frottement * vy;
 				vz -= frottement * vz;
 				// position
-				x = this.vertices[i*4] + 0.001 * vx;
-				y = this.vertices[i*4+1] + 0.001 * vy;
-				z = this.vertices[i*4+2] + 0.001 * vz;
+				x = this.vertices[i*4] + frottement * vx;
+				y = this.vertices[i*4+1] + frottement * vy;
+				z = this.vertices[i*4+2] + frottement * vz;
 				// rebond
 				if (z<radius){
 					z = radius;

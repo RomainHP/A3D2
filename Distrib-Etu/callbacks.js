@@ -94,14 +94,12 @@ function handleMouseMove(event) {
 		// mouvement de la source de lumiere
 		lightSource[0] += newDelta[0]/newDelta[3]/300;
 		lightSource[1] += newDelta[1]/newDelta[3]/300;
-		lightSource[2] += newDelta[2]/newDelta[3]/300;
 		Light3D.redraw();
 
 	}else if(shiftDown){
 		// mouvement de la premiere bille
 		Balls3D.speed[0] += newDelta[0]/newDelta[3]/300;
 		Balls3D.speed[1] += newDelta[1]/newDelta[3]/300;
-		Balls3D.speed[2] += newDelta[2]/newDelta[3]/300;
 	}
 }
 //=======================================================

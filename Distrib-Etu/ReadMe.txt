@@ -7,11 +7,7 @@
 ---	Liste des fichiers
 ----------------------------------------------------------------------------------------------------------
 
--	main.html : contient le code html de la page
--	callback.js : contient les fonctions gerant la fenetre
--	glCourseBasis.js : parametre des shaders et envoi au GPU, gestion des animations et des differentes options...
 -	utils.js	: fonctions utilitaires utilisees dans glCourseBasis
--	plane.vs / plane.fs : shader pour le plateau
 -	balls.vs / balls.fs : shader pour les boules
 -	light.vs	/ light.fs : shader pour la boule symbolisant la source de lumiere (couleur toujours en jaune)
 

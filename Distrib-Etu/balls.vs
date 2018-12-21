@@ -18,11 +18,14 @@ varying float vModeBrdf;
 varying vec3 vLightColor;
 
 void main(void) {
+
 	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
 	gl_PointSize = 800.0*uPMatrix[0][0]*aVertexPosition.w/gl_Position.w;
-	vColor = aColor.xyz;
+	
 	vLightSource = uMVMatrix * vec4(uLightSource, 1.0);
 	vCoords = uMVMatrix * vec4(aVertexPosition.xyz, 1.0);
+
+	vColor = aColor.xyz;
 	vRadius = aVertexPosition.w;
 	vNi = uBrdfParams.x;
 	vKs = uBrdfParams.y;
