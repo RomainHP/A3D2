@@ -7,7 +7,7 @@
 ---	Liste des fichiers
 ----------------------------------------------------------------------------------------------------------
 
--	utils.js	: fonctions utilitaires utilisees dans glCourseBasis
+-	utils.js	: fonctions utilitaires utilisees dans glCourseBasis (ou main pour la conversio en rgb)
 -	balls.vs / balls.fs : shader pour les boules
 -	light.vs	/ light.fs : shader pour la boule symbolisant la source de lumiere (couleur toujours en jaune)
 

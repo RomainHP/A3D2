@@ -60,7 +60,7 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 	float D = 0.0;	// distribution de Beckmann
 	float sigCos = M_PI*sigma2*dotnm4;
 	if (sigCos!=0.0){
-		D = exp(-tanTm2/(2.0*sigma2))/sigCos;
+		D = exp(-tannm2/(2.0*sigma2))/sigCos;
 	}
 
 	float fs = F*D*G/(4.0*dotin*doton);	// formule de cook-torrance

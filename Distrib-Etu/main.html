@@ -30,15 +30,6 @@
 			modeBrdf = newMode;
 		}
 
-		function hexToRgb(hex) {
-			var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-			return result ? {
-					r: parseInt(result[1], 16),
-					g: parseInt(result[2], 16),
-					b: parseInt(result[3], 16)
-			} : null;
-		}
-
 		function modifyLightColor(color){
 			rgbColor = hexToRgb(color);
 			lightColor = [rgbColor.r/255.0, rgbColor.g/255.0, rgbColor.b/255.0];
@@ -46,6 +37,14 @@
 
 		function resetZoom() {
 			deltaZoom = 0.0;
+		}
+
+		function resetRotation() {
+			rotZ = 0;
+			rotX = 0;
+			mat4.identity(objMatrix);
+			mat4.rotate(objMatrix, rotX, [1, 0, 0]);
+			mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
 		}
 
 		function resetLightSource(){
@@ -138,7 +137,10 @@
 								<td><button class="btn btn-secondary"	onclick="resetZoom()">Reset zoom</button></td>
 							</tr>
 							<tr>
-								<td><button class="btn btn-secondary"	onclick="resetLightSource()">Reset lumiere</button></td>
+								<td><button class="btn btn-secondary"	onclick="resetRotation()">Reset scene rotation</button></td>
+							</tr>
+							<tr>
+								<td><button class="btn btn-secondary"	onclick="resetLightSource()">Reset position lumiere</button></td>
 							</tr>
 						</tbody>
 					</table>
