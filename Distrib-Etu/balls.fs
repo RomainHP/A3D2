@@ -80,9 +80,7 @@ void main(void)
 	if (dist>(0.5*0.5))
 		discard;
 
-	if (vModeBrdf!=0.0) {	// si mode == 0.0 alors pas de brdf
-
-		vec3 Li = vLightColor * 3.0;	// Lumiere incidente
+	vec3 Li = vLightColor * 3.0;	// Lumiere incidente
 		vec3 kd = vColor;
 
 		// calcul de la normale
@@ -113,8 +111,6 @@ void main(void)
 			vec3 CT = vec3(apply_cook_torrance(vNi, vSigma, wi, wo, N));
 
 			Lo = Li * (kd/M_PI + vKs*CT) * cosTi;
-		}
-	}
 
 	gl_FragColor = vec4(Lo,1.0);
 }
