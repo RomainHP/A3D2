@@ -52,3 +52,7 @@ Pour chaque boule, sa position, couleur et sigma est calculee aleatoirement.
 		Permet de modifier les parametres donnes pour Cook-Torrance
 		Ks est le coefficient applique a Cook-Torrance avant de l'ajouter a Lambert
 		
+- Faire tourner une balle en rond :
+		Permet de faire tourner une balle (la premiere) à laquelle on n'applique pas les forces et qui poussent les autres
+		Cliquer sur le bouton Run ou Stop pour lancer ou stopper l'animation
+		Glisser sur le slider en dessous pour faire varier la vitesse de rotation

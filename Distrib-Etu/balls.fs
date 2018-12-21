@@ -112,6 +112,8 @@ void main(void)
 
 			Lo = Li * (kd/M_PI + vKs*CT) * cosTi;
 
+		}
+
 	gl_FragColor = vec4(Lo,1.0);
 }
 

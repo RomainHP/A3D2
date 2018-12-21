@@ -18,11 +18,11 @@
 			Balls3D.redraw(nb);
 		}
 
-		function modifyVitesseRotation(nb) {
+		function modifyFrequenceRotation(nb) {
 			if (nb>50){	
-				Balls3D.vitesseRotation = nb-50;
+				Balls3D.frequenceRotation = nb-50;
 			} else if (nb<50) {
-				Balls3D.vitesseRotation = nb+50;
+				Balls3D.frequenceRotation = nb+50;
 			}
 		}
 
@@ -47,10 +47,10 @@
 			var button = document.getElementById("button_cercle");
 			if (Balls3D.modeMouvementCercle){
 				Balls3D.modeMouvementCercle = false;
-				button.innerText = "Run Cercle";
+				button.innerText = "Run";
 			} else {
 				Balls3D.runMouvementCercle();
-				button.innerText = "Stop Cercle";
+				button.innerText = "Stop";
 			}
 		}
 
@@ -119,7 +119,7 @@
 							</tr>
 							<tr>
 								<td>
-									<button class="btn btn-secondary" onclick="change_animation_inclinaison()" id="anime_inclinaison_button">Play animation rotation</button>
+									<button class="btn btn-primary" onclick="change_animation_inclinaison()" id="anime_inclinaison_button">Play animation rotation</button>
 								</td>
 							</tr>
 							<tr>
@@ -155,9 +155,9 @@
 							<tr>
 								<td>
 									<p>Mouvement circulaire :</p>
-									<input onchange="modifyVitesseRotation(this.value)" type="range" min="1" max="100" value="50" class="form-control-range" id="vitesseRotation">
-									<p>Vitesse : <span id="displayVitesseRotation"></span></p>
-									<button class="btn btn-primary" onclick="modifyModeCercle()" id="button_cercle">Run Cercle</button>
+									<input onchange="modifyFrequenceRotation(this.value)" type="range" min="0.001" max="0.01" value="50" step="0.001" class="form-control-range" id="frequenceRotation">
+									<p>Frequence : <span id="displayfrequenceRotation"></span></p>
+									<button class="btn btn-primary" onclick="modifyModeCercle()" id="button_cercle">Run</button>
 								</td>
 								</td>
 							</tr>
@@ -195,11 +195,11 @@
 		}
 
 		// texte pour slider correspondant a la vitesse de rotation
-		var sliderVitesseRotation = document.getElementById("vitesseRotation");
-		var outputVitesseRotation = document.getElementById("displayVitesseRotation");
-		outputVitesseRotation.innerHTML = sliderVitesseRotation.value;
-		sliderVitesseRotation.oninput = function() {
-			outputVitesseRotation.innerHTML = this.value;
+		var sliderfrequenceRotation = document.getElementById("frequenceRotation");
+		var outputfrequenceRotation = document.getElementById("displayfrequenceRotation");
+		outputfrequenceRotation.innerHTML = sliderfrequenceRotation.value;
+		sliderfrequenceRotation.oninput = function() {
+			outputfrequenceRotation.innerHTML = this.value;
 		}
 
 		// texte pour slider correspondant a ni

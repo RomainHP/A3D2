@@ -198,7 +198,7 @@ Balls3D.initAll = function(nbBilles = 30)
 	console.log("Balls3D : shaders loading...");
 
 	this.modeMouvementCercle = false;
-	this.vitesseRotation = 100;
+	this.frequenceRotation = 0.01;
 }
 
 // =====================================================
@@ -209,26 +209,23 @@ Balls3D.redraw = function(nbBilles)
 	if (oldNb != nbBilles && nbBilles>=0){
 
 		if (oldNb < nbBilles) {
-			for (var i=0; i<nbBilles; i++){
-				if (i >= oldNb){
-					var randomPos = randomBallPosition();
-					this.vertices[i*4] = randomPos[0];
-					this.vertices[i*4+1] = randomPos[1];
-					this.vertices[i*4+2] = randomPos[2];
-					this.vertices[i*4+3] = randomPos[3];
+			// on ajoute de nouvelles billes
+			for (var i=oldNb; i<nbBilles; i++){
+				var randomPos = randomBallPosition();
+				this.vertices[i*4] = randomPos[0];
+				this.vertices[i*4+1] = randomPos[1];
+				this.vertices[i*4+2] = randomPos[2];
+				this.vertices[i*4+3] = randomPos[3];
 
 
-					var randomCol = randomBallColor();
-					this.colors[i*4] = randomCol[0];
-					this.colors[i*4+1] = randomCol[1];
-					this.colors[i*4+2] = randomCol[2];
-					this.colors[i*4+3] = randomCol[3];
+				var randomCol = randomBallColor();
+				this.colors[i*4] = randomCol[0];
+				this.colors[i*4+1] = randomCol[1];
+				this.colors[i*4+2] = randomCol[2];
+				this.colors[i*4+3] = randomCol[3];
 
-					var newSpeed = new Array((nbBilles-oldNb)*3).fill(0.0);
-					this.speed = this.speed.concat(newSpeed);
-				} else {
-					this.speed.slice(0,nbBilles);
-				}
+				var newSpeed = new Array((nbBilles-oldNb)*3).fill(0.0);
+				this.speed = this.speed.concat(newSpeed);
 			}
 		}
 
@@ -312,11 +309,9 @@ Balls3D.calculForces = function()
 				fz = ressort * distance * (-AB[2]/normAB);
 				// forces sur A
 				radiusBA = radiusB/radiusA;
-				if (i!=0){
-					forces[i*3]   += fx * radiusBA; // la balle la plus lourde ressent moins de forces
-					forces[i*3+1] += fy * radiusBA;
-					forces[i*3+2] += fz * radiusBA;
-				}
+				forces[i*3]   += fx * radiusBA; // la balle la plus lourde ressent moins de forces
+				forces[i*3+1] += fy * radiusBA;
+				forces[i*3+2] += fz * radiusBA;
 				// forces sur B
 				radiusAB = 1 / radiusBA;
 				forces[k*3]   -= fx * radiusAB;
@@ -343,61 +338,70 @@ Balls3D.animate = function()
 				// rayon et masse
 				radius = this.vertices[i*4+3];
 				mass = radius*0.1;
-				// vitesse
-				vx = this.speed[i*3]   + frottement * (forces[i*3] / mass);
-				vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass);
-				vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - frottement * gravity;
-				// si il y a une animation en fonction de la rotation de la scene
-				if (this.animationRotation){
-					vx -= frottement * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
-					vy -= frottement * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
-				}
-				// frottement
-				vx -= frottement * vx;
-				vy -= frottement * vy;
-				vz -= frottement * vz;
-				// position
-				x = this.vertices[i*4] + frottement * vx;
-				y = this.vertices[i*4+1] + frottement * vy;
-				z = this.vertices[i*4+2] + frottement * vz;
-				// rebond
-				if (z<radius){
-					z = radius;
-					vz = - 0.9 * vz;
-				}
-				if (x<-0.7+radius){
-					x = -0.7+radius;
-					vx = - 0.9 * vx;
-				}
-				if (y<-0.7+radius){
-					y = -0.7+radius;
-					vy = - 0.9 * vy;
-				}
-				if (x>0.7-radius){
-					x = 0.7-radius;
-					vx = - 0.9 * vx;
-				}
-				if (y>0.7-radius){
-					y = 0.7-radius;
-					vy = - 0.9 * vy;
-				}
+
 				// mouvement circulaire sur la balle 0 si le mode est active
-				if (i==0 && this.modeMouvementCercle){
-					var delta = [0.7-radius,0.7-radius,0,0.001];
+				if (i==0 && this.modeMouvementCercle){	// pas de calculs de vitesse
+
+					var delta = [0.7-radius,0.7-radius,0,0.001];	// cercle de rayon 0.7-radius
 					var newDelta = [0,0,0,0];
-					for(k=0;k<4;k++){
+					for(k=0;k<4;k++){	// conversion
 						for(l=0;l<4;l++){
 							newDelta[k] += objMatrix[k*4+l]*delta[l];
 						}
 					}
-					var w = (Math.PI*2.0)/this.vitesseRotation;
+					var w = (Math.PI*2.0)*this.frequenceRotation;
+					// x et y en fonction de la rotation sur le cercle
 					x = Math.cos(w*time) * newDelta[0];
 					y = Math.sin(w*time) * newDelta[1];
+					z = radius;
+
+				} else {	// sinon on calcule normalement
+
+					// vitesse
+					vx = this.speed[i*3]   + frottement * (forces[i*3] / mass);
+					vy = this.speed[i*3+1] + 0.001 * (forces[i*3+1] / mass);
+					vz = this.speed[i*3+2] + 0.001 * (forces[i*3+2] / mass) - frottement * gravity;
+					// si il y a une animation en fonction de la rotation de la scene
+					if (this.animationRotation){
+						vx -= frottement * (Math.cos(rotX)*Math.sin(rotZ)) * gravity;
+						vy -= frottement * (Math.sin(rotX)*Math.cos(rotZ)) * gravity;
+					}
+					// frottement
+					vx -= frottement * vx;
+					vy -= frottement * vy;
+					vz -= frottement * vz;
+					// position
+					x = this.vertices[i*4] + frottement * vx;
+					y = this.vertices[i*4+1] + frottement * vy;
+					z = this.vertices[i*4+2] + frottement * vz;
+					// rebond
+					if (z<radius){
+						z = radius;
+						vz = - 0.9 * vz;
+					}
+					if (x<-0.7+radius){
+						x = -0.7+radius;
+						vx = - 0.9 * vx;
+					}
+					if (y<-0.7+radius){
+						y = -0.7+radius;
+						vy = - 0.9 * vy;
+					}
+					if (x>0.7-radius){
+						x = 0.7-radius;
+						vx = - 0.9 * vx;
+					}
+					if (y>0.7-radius){
+						y = 0.7-radius;
+						vy = - 0.9 * vy;
+					}
+
+					// affectation vitesse
+					this.speed[i*3] = vx;
+					this.speed[i*3+1] = vy;
+					this.speed[i*3+2] = vz;
+
 				}
-				// affectation vitesse
-				this.speed[i*3] = vx;
-				this.speed[i*3+1] = vy;
-				this.speed[i*3+2] = vz;
 				// affectation position
 				this.vertices[i*4] = x;
 				this.vertices[i*4+1] = y;
