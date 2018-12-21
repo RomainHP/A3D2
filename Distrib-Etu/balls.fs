@@ -28,43 +28,43 @@ float apply_cook_torrance(float ni, float sigma, vec3 wi, vec3 wo, vec3 N)
 	float dotim = max(0.0,dot(wi,m));
 	float dotim2 = dotim * dotim;
 
-	float cosTm = max(0.0,dot(N,m));
-	float cosTm2 = cosTm*cosTm;
-	float cosTm4 = cosTm2*cosTm2;
+	float dotnm = max(0.0,dot(N,m));
+	float dotnm2 = dotnm*dotnm;
+	float dotnm4 = dotnm2*dotnm2;
 
-	float tanTm2 = (1.0-cosTm2)/cosTm2;
+	float tannm2 = (1.0-dotnm2)/dotnm2;
 
+	// variables pour calculer fresnel
 	float g = sqrt(ni2 + dotim2 - 1.0);
 	float gpc = g + dotim;
 	float gmc = g - dotim;
 	float cgpc = dotim * gpc - 1.0;
 	float cgmc = dotim * gmc + 1.0;
 
+	// la variable vaut 0 s'il y a une division par 0
+
+	float G = 0.0;	// ombrage et masquage
+	if (dotom!=0.0 && dotim!=0.0) {
+		G = min( 1.0, min( (2.0*dotnm*doton)/dotom, (2.0*dotnm*dotin)/dotim ));
+	}	
+
+	if (doton==0.0) {
+		return G;	// si l'angle entre o et n est nul, on retourne G pour conserver le degrade
+	}
+
 	float F = 0.0;	// facteur de fresnel
 	if (gpc!=0.0 && cgmc!=0.0){
 		F = (gmc*gmc)/(2.0*gpc*gpc) * (1.0 + (cgpc*cgpc)/(cgmc*cgmc));
 	}
-	
-	float G = 0.0;	// ombrage et masquage
-	if (dotom!=0.0 && dotim!=0.0) {
-		G = min( 1.0, min( (2.0*cosTm*doton)/dotom, (2.0*cosTm*dotin)/dotim ));
-	}	
 
-	float fs = 0.0;
-
-	if (doton==0.0){
-		fs = G;
-
-	} else {
-		float D = 0.0;	// distribution de Beckmann
-		float sigCos = M_PI*sigma2*cosTm4;
-		if (sigCos!=0.0){
-			D = exp(-tanTm2/(2.0*sigma2))/sigCos;
-		}
-		fs = F*D*G/(4.0*dotin*doton);	// formule de cook-torrance
+	float D = 0.0;	// distribution de Beckmann
+	float sigCos = M_PI*sigma2*dotnm4;
+	if (sigCos!=0.0){
+		D = exp(-tanTm2/(2.0*sigma2))/sigCos;
 	}
 
-	return fs;
+	float fs = F*D*G/(4.0*dotin*doton);	// formule de cook-torrance
+	return fs;	
 }
 
 //========================================================================
@@ -84,7 +84,6 @@ void main(void)
 
 		vec3 Li = vLightColor * 3.0;	// Lumiere incidente
 		vec3 kd = vColor;
-		float ks = 0.5;
 
 		// calcul de la normale
 		float z = sqrt((0.5*0.5) - dist);
@@ -98,8 +97,9 @@ void main(void)
 		// calcul de la lumiere
 		vec3 wi = normalize(vLightSource.xyz-point3D);
 
+		float cosTi = max(0.0,dot(wi,N));	// angle entre i et N necessaire pour les brdfs
+
 		// couleur en fonction de l'intensite lumineuse
-		float cosTi = max(0.0,dot(wi,N));
 
 		if (vModeBrdf==1.0){	// Lambert
 
@@ -107,8 +107,10 @@ void main(void)
 
 		} else if (vModeBrdf==2.0){	// Lambert + Cook-Torrance
 
+			vec3 wo = normalize(vec3(0.0)-point3D);
+
 			// calcul de la specularite (cook torrance)
-			vec3 CT = vec3(apply_cook_torrance(vNi, vSigma, wi, normalize(vec3(0.0)-point3D), N));
+			vec3 CT = vec3(apply_cook_torrance(vNi, vSigma, wi, wo, N));
 
 			Lo = Li * (kd/M_PI + vKs*CT) * cosTi;
 		}
