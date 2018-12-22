@@ -1,6 +1,4 @@
-// Fragment shader : exécuté pour chaque pixel
-// Calcule si le pixel doit être noir ou blanc pour former le motif de grille
-// en fonction de sa position
+
 precision mediump float;
 
 varying vec2 texCoords;

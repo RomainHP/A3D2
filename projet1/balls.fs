@@ -81,38 +81,30 @@ void main(void)
 		discard;
 
 	vec3 Li = vLightColor * 3.0;	// Lumiere incidente
-		vec3 kd = vColor;
+	vec3 kd = vColor;
 
-		// calcul de la normale
-		float z = sqrt((0.5*0.5) - dist);
-		vec3 ps = vec3(pos.x,pos.y,z);	// coordonnees du point dans le fragment
-		vec3 N = normalize(ps-vec3(0.5,0.5,0.0));
-		N.y = - N.y;	// inversion de l'axe y car le repere camera est un repere main gauche
+	// calcul de la normale
+	float z = sqrt((0.5*0.5) - dist);
+	vec3 ps = vec3(pos.x,pos.y,z);	// coordonnees du point dans le fragment
+	vec3 N = normalize(ps-vec3(0.5,0.5,0.0));
+	N.y = - N.y;	// inversion de l'axe y car le repere camera est un repere main gauche
 
-		// point dans le repere 3D
-		vec3 point3D = vCoords.xyz + vRadius * N;
+	// point dans le repere 3D
+	vec3 point3D = vCoords.xyz + vRadius * N;
 
-		// calcul de la lumiere
-		vec3 wi = normalize(vLightSource.xyz-point3D);
+	// calcul de la lumiere
+	vec3 wi = normalize(vLightSource.xyz-point3D);
 
-		float cosTi = max(0.0,dot(wi,N));	// angle entre i et N necessaire pour les brdfs
+	float cosTi = max(0.0,dot(wi,N));	// angle entre i et N necessaire pour les brdfs
 
-		// couleur en fonction de l'intensite lumineuse
+	// couleur en fonction de l'intensite lumineuse
 
-		if (vModeBrdf==1.0){	// Lambert
+		vec3 wo = normalize(vec3(0.0)-point3D);
 
-			Lo = Li * kd/M_PI * cosTi;
+		// calcul de la specularite (cook torrance)
+		vec3 CT = vec3(apply_cook_torrance(vNi, vSigma, wi, wo, N));
 
-		} else if (vModeBrdf==2.0){	// Lambert + Cook-Torrance
-
-			vec3 wo = normalize(vec3(0.0)-point3D);
-
-			// calcul de la specularite (cook torrance)
-			vec3 CT = vec3(apply_cook_torrance(vNi, vSigma, wi, wo, N));
-
-			Lo = Li * (kd/M_PI + vKs*CT) * cosTi;
-
-		}
+		Lo = Li * (kd/M_PI + vKs*CT) * cosTi;
 
 	gl_FragColor = vec4(Lo,1.0);
 }

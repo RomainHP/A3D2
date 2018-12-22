@@ -2,10 +2,95 @@
 // =====================================================
 var gl;
 // =====================================================
-var mvMatrix = mat4.create();  // modelView
-var pMatrix = mat4.create();   // projection
-var objMatrix = mat4.create(); // ici, utilisée pour les rotations souris
+var mvMatrix = mat4.create();
+var pMatrix = mat4.create();
+var objMatrix = mat4.create();
 // =====================================================
+
+
+
+
+
+
+// =====================================================
+// PLAN 3D, Support géométrique
+// =====================================================
+
+var Plane3D = { fname:'plane', loaded:-1, shader:null };
+
+// =====================================================
+Plane3D.initAll = function()
+{
+
+	vertices = [
+		-0.7, -0.7, 0.0,
+		 0.7, -0.7, 0.0,
+		 0.7,  0.7, 0.0,
+		-0.7,  0.7, 0.0
+	];
+
+	texcoords = [
+		0.0,0.0,
+		0.0,1.0,
+		1.0,1.0,
+		1.0,0.0
+	];
+
+	this.vBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	this.vBuffer.itemSize = 3;
+	this.vBuffer.numItems = 4;
+
+	this.tBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texcoords), gl.STATIC_DRAW);
+	this.tBuffer.itemSize = 2;
+	this.tBuffer.numItems = 4;
+
+	console.log("Plane3D : init buffers ok.");
+
+	loadShaders(this);
+
+	console.log("Plane3D : shaders loading...");
+}
+
+
+// =====================================================
+Plane3D.setShadersParams = function()
+{
+	console.log("Plane3D : setting shader parameters...")
+
+	gl.useProgram(this.shader);
+
+	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
+	gl.enableVertexAttribArray(this.shader.vAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	this.shader.tAttrib = gl.getAttribLocation(this.shader, "aTexCoords");
+	gl.enableVertexAttribArray(this.shader.tAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
+	gl.vertexAttribPointer(this.shader.tAttrib,this.tBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
+	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
+
+	console.log("Plane3D : parameters ok.")
+
+}
+
+
+// =====================================================
+Plane3D.draw = function()
+{
+	if(this.shader) {		
+			this.setShadersParams();
+			setMatrixUniforms(this);
+			gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
+			gl.drawArrays(gl.LINE_LOOP, 0, this.vBuffer.numItems);
+	}
+}
 
 
 
@@ -15,9 +100,12 @@ var objMatrix = mat4.create(); // ici, utilisée pour les rotations souris
 // =====================================================
 
 
+
+
+
 // =====================================================
 function webGLStart() {
-	var canvas = document.getElementById("WebGL-test"); // canvas utilisé par webGL
+	var canvas = document.getElementById("WebGL-test");
 
 	mat4.identity(objMatrix);
 	canvas.onmousedown = handleMouseDown;
@@ -33,21 +121,16 @@ function webGLStart() {
 function initGL(canvas)
 {
 	try {
-		// initialise le canvas pour webGL
+		
 		gl = canvas.getContext("experimental-webgl");
 		gl.viewportWidth = canvas.width;
 		gl.viewportHeight = canvas.height;
 		gl.viewport(0, 0, canvas.width, canvas.height);
 
-		gl.clearColor(0.7, 0.7, 0.7, 1.0); // couleur de fond
-		
-		// activation z-buffer : après le passage au fragment shader, vérifie si le pixel
-		// est devant (on remplace l'ancien) ou derrière (on jette) un autre.
+		gl.clearColor(0.7, 0.7, 0.7, 1.0);
 		gl.enable(gl.DEPTH_TEST);
-
-		// on retire les triangles dont la face qui apparaît est celle de dos
 		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.BACK);
+		gl.cullFace(gl.BACK); 
 
 	} catch (e) {}
 	if (!gl) {
@@ -72,9 +155,7 @@ function loadShaderText(Obj3D,ext) {   // lecture asynchrone...
 			if(ext=='.fs') { Obj3D.fsTxt = xhttp.responseText; Obj3D.loaded ++; }
 			if(Obj3D.loaded==2) {
 				Obj3D.loaded ++;
-				// Compile le vertex shader et le fragment shaders sur la CG.
 				compileShaders(Obj3D);
-				// met en place les paramètres pour le vertex shader
 				Obj3D.setShadersParams();
 				console.log("Shader ok : "+Obj3D.fname+".");
 				Obj3D.loaded ++;
@@ -132,15 +213,10 @@ function compileShaders(Obj3D)
 
 // =====================================================
 function setMatrixUniforms(Obj3D) {
-
-	// exécuté de bas en haut.
-		// construit la matrice de projection
 		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
-		mat4.identity(mvMatrix); // pourquoi ??
-		mat4.translate(mvMatrix, [0.0, 0.0, -2.0]); // translation des objets en face de la caméra
-		mat4.multiply(mvMatrix, objMatrix);	// rotation des objets (matrice objMatrix modifiée par callbacks souris)
-
-	// on envoie les matrices en tant que variables uniform dans le vertex shader
+		mat4.identity(mvMatrix);
+		mat4.translate(mvMatrix, [0.0, 0.0, -2.0]);
+		mat4.multiply(mvMatrix, objMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
 }
@@ -149,23 +225,24 @@ function setMatrixUniforms(Obj3D) {
 // =====================================================
 function shadersOk()
 {
-	// vérifie si tous les shaders sont ok
-	// ajouter && new.shadersOk() pour un nouveau shader à ajouter
-	return Plane3D.shadersOk();
+	if(Plane3D.loaded == 4) return true;
+
+	if(Plane3D.loaded < 0) {
+		Plane3D.loaded = 0;
+		Plane3D.initAll();
+		return false;
+	}
+
+	return false;
+
 }
 
 // =====================================================
 function drawScene() {
-	// executed each tick
 
-	// on efface tous les pixels avant de redessiner
 	gl.clear(gl.COLOR_BUFFER_BIT);
-
-	// on ne redessine que si les shaders sont prêts
-	// shadersOk déclenche initAll
 	if(shadersOk()) {
-
-		Plane3D.draw(); // plan
+		Plane3D.draw();
 	}
 
 }
