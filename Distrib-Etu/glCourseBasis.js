@@ -10,6 +10,7 @@ var lightSourceDeltaX = 0.0;
 var lightSourceDeltaY = 0.0;
 var objMatrix = mat4.create();
 var deltaZoom = 0.0;
+var outOfGame = new Array(16).fill(false);
 var lightColor = [1.0,1.0,1.0];		// couleur de la source de lumiere
 
 var gravity = 9.81;
@@ -113,18 +114,12 @@ Plane3D.initAll = function()
 	this.tBuffer.itemSize = 2;
 	this.tBuffer.numItems = 8;
 
-	console.log("Plane3D : init buffers ok.");
-
 	loadShaders(this);
-
-	console.log("Plane3D : shaders loading...");
 }
 
 // =====================================================
 Plane3D.setShadersParams = function()
 {
-	console.log("Plane3D : setting shader parameters...")
-
 	gl.useProgram(this.shader);
 
 	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
@@ -140,7 +135,6 @@ Plane3D.setShadersParams = function()
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
 
-	console.log("Plane3D : parameters ok.")
 }
 
 // =====================================================
@@ -283,17 +277,12 @@ Balls3D.initAll = function(nbBilles = 16)
 	this.cBuffer.itemSize = 4;
 	this.cBuffer.numItems = nbBilles;
 
-	console.log("Balls3D : init buffers ok.");
-
 	loadShaders(this);
-
-	console.log("Balls3D : shaders loading...");
 }
 
 // =====================================================
 Balls3D.setShadersParams = function()
 {
-	console.log("Balls3D : setting shader parameters...")
 
 	gl.useProgram(this.shader);
 
@@ -314,7 +303,6 @@ Balls3D.setShadersParams = function()
 	this.shader.lightSourceUniform = gl.getUniformLocation(this.shader, "uLightSource");
 	this.shader.lightColorUniform = gl.getUniformLocation(this.shader, "uLightColor");
 
-	console.log("Balls3D : parameters ok.")
 }
 
 // =====================================================
@@ -370,8 +358,10 @@ Balls3D.animate = function()
 		// boucle pas de temps
 		for (var j = 0; j < nbPasTemps; j++) {
 			forces = this.calculForces(2);
-			// boucle sur les objets
-			for (var i = 0; i < this.vBuffer.numItems; i++) {
+			i =0;
+			end = false;
+			while(!end){
+				var changed = false;
 				// rayon et masse
 				radius = this.vertices[i*4+3];
 				mass = radius*0.1;
@@ -392,45 +382,64 @@ Balls3D.animate = function()
 				x = this.vertices[i*4] + 0.001 * vx;
 				y = this.vertices[i*4+1] + 0.001 * vy;
 				z = this.vertices[i*4+2] + 0.001 * vz;
-				
+
 				//REBOND BILLARD
 				var inhole = false;
 				if(
-				   (x<=-0.65 	&& (y>=-0.05 && y<= 0.05)) //Milieu gauche
+				(x<=-0.65 	&& (y>=-0.05 && y<= 0.05)) //Milieu gauche
 				|| (x>=0.65 	&& (y>=-0.05 && y<= 0.05)) //Milieu droit
-				|| (x<=-0.65 	&& y>=0.95) //Haut gauche
-				|| (x>=0.65 	&& y>=0.95) //Haut droit
-				|| (x<=-0.65 	&& y<=-0.95) //Bas gauche
-				|| (x>=0.65 	&& y<=-0.95) //Bas droit
+				|| (x<=-0.62 	&& y>=0.92) //Haut gauche
+				|| (x>=0.62 	&& y>=0.92) //Haut droit
+				|| (x<=-0.62 	&& y<=-0.92) //Bas gauche
+				|| (x>=0.62 	&& y<=-0.92) //Bas droit
 				) 
 				{
-					z = -1.0;
-					vz = 0.0;
 					inhole = true;
-					alert(x + " " + y);
-				}
-				
+					outOfGame[i]=true;
+				} 
+
 				// rebond
-				if(!inhole){
-					if (z<radius){
-						z = radius;
-						vz = - 0.9 * vz;
-					}
-					if (x<-0.7+radius){
-						x = -0.7+radius;
-						vx = - 0.9 * vx;
-					}
-					if (y<-1.0+radius){
-						y = -1.0+radius;
-						vy = - 0.9 * vy;
-					}
-					if (x>0.7-radius){
-						x = 0.7-radius;
-						vx = - 0.9 * vx;
-					}
-					if (y>1.0-radius){
-						y = 1.0-radius;
-						vy = - 0.9 * vy;
+				if(outOfGame[0]){
+					x = 0.0;
+					y = -0.5;
+					z = radius;
+					vx = 0.0;
+					vy = 0.0;
+					vz = 0.0;
+					inhole = false;
+					outOfGame[0] = false;
+				}else if(outOfGame[i]){
+					this.vBuffer.numItems --;
+					this.cBuffer.numItems --;
+					outOfGame.splice(i, 1);
+					this.vertices.splice(i,4);
+					this.speed.splice(i,3);
+					forces.splice(i,3);
+					this.colors.splice(i,4);
+					changed = true;
+					console.log(outOfGame);
+				}else if(!outOfGame[i]){
+					if(!inhole){
+						if (z<radius){
+							z = radius;
+							vz = - 0.9 * vz;
+						}
+						if (x<-0.7+radius){
+							x = -0.7+radius;
+							vx = - 0.9 * vx;
+						}
+						if (y<-1.0+radius){
+							y = -1.0+radius;
+							vy = - 0.9 * vy;
+						}
+						if (x>0.7-radius){
+							x = 0.7-radius;
+							vx = - 0.9 * vx;
+						}
+						if (y>1.0-radius){
+							y = 1.0-radius;
+							vy = - 0.9 * vy;
+						}
 					}
 				}
 
@@ -439,26 +448,38 @@ Balls3D.animate = function()
 					this.speed[i*3] = vx;
 					this.speed[i*3+1] = vy;
 					this.speed[i*3+2] = vz;
-				}else{
-					this.speed[i*3] = 0.0;
-					this.speed[i*3+1] = 0.0;
-					this.speed[i*3+2] = vz;
 				}
+				// else{
+				// 	this.speed[i*3] = 0.0;
+				// 	this.speed[i*3+1] = 0.0;
+				// 	this.speed[i*3+2] = 0.0;
+				// }
 				// affectation position
 				if(!inhole){
 					this.vertices[i*4] = x;
 					this.vertices[i*4+1] = y;
 					this.vertices[i*4+2] = z;
-				}else{
-					this.vertices[i*4] = 0.0;
-					this.vertices[i*4+1] = 0.0;
-					this.vertices[i*4+2] = -1.0;
 				}
+				// else{
+				// 	this.vertices[i*4] = 0.0;
+				// 	this.vertices[i*4+1] = 0.0;
+				// 	this.vertices[i*4+2] = -1.0;
+				// }
+
+				if (!changed)i++;
+				end = i >= this.vBuffer.numItems;
 			}
+			// // boucle sur les objets
+			// for (var i = 0; i < this.vBuffer.numItems; i++) {
+				
+			// }
 		}
 		// ajout au buffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
 	}
 }
 
@@ -500,9 +521,6 @@ function initGL(canvas)
 		gl.cullFace(gl.BACK);
 
 	} catch (e) {}
-	if (!gl) {
-		console.log("Could not initialise WebGL");
-	}
 }
 
 // =====================================================

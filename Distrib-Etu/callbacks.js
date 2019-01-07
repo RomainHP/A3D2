@@ -104,7 +104,7 @@ function handleMouseMove(event) {
 		Light3D.redraw();
 
 	}else if(shiftDown){
-		if(Balls3D.speed[0]==0.0 && Balls3D.speed[1]==0.0){
+		// if(Balls3D.speed[0]==0.0 && Balls3D.speed[1]==0.0){
 			if((Balls3D.vertices[0]+deltaX/coeff) < -0.7)
 				Balls3D.speed[0] = -0.7;
 			else if((Balls3D.vertices[0]+deltaX/coeff) > 0.7 )
@@ -118,7 +118,7 @@ function handleMouseMove(event) {
 				Balls3D.speed[1] = 1.;
 			else
 				Balls3D.speed[1] -= deltaY/coeff;
-		}
+		// }
 	}
 }
 //=======================================================
