@@ -92,6 +92,65 @@ Plane3D.draw = function()
 	}
 }
 
+// =====================================================
+// Quad
+// =====================================================
+
+var Quad = { fname:'quad', loaded:-1, shader:null };
+
+// =====================================================
+Quad.initAll = function()
+{
+	vertices = [
+		-1.0, -1.0, 0.0,
+		 1.0, -1.0, 0.0,
+		 1.0,  1.0, 0.0,
+		-1.0,  1.0, 0.0
+	];
+
+	this.vBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	this.vBuffer.itemSize = 3;
+	this.vBuffer.numItems = 4;
+
+	console.log("Quad : init buffers ok.");
+
+	loadShaders(this);
+
+	console.log("Quad : shaders loading...");
+}
+
+
+// =====================================================
+Quad.setShadersParams = function()
+{
+	console.log("Quad : setting shader parameters...")
+
+	gl.useProgram(this.shader);
+
+	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
+	gl.enableVertexAttribArray(this.shader.vAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
+	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
+
+	console.log("Quad : parameters ok.")
+
+}
+
+
+// =====================================================
+Quad.draw = function()
+{
+	if(this.shader) {		
+			this.setShadersParams();
+			setMatrixUniforms(this);
+			gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
+	}
+}
 
 
 
@@ -121,7 +180,6 @@ function webGLStart() {
 function initGL(canvas)
 {
 	try {
-		
 		gl = canvas.getContext("experimental-webgl");
 		gl.viewportWidth = canvas.width;
 		gl.viewportHeight = canvas.height;
@@ -225,7 +283,7 @@ function setMatrixUniforms(Obj3D) {
 // =====================================================
 function shadersOk()
 {
-	if(Plane3D.loaded == 4) return true;
+	if(Plane3D.loaded == 4 && Quad.loaded == 4) return true;
 
 	if(Plane3D.loaded < 0) {
 		Plane3D.loaded = 0;
@@ -233,18 +291,22 @@ function shadersOk()
 		return false;
 	}
 
+	if(Quad.loaded < 0) {
+		Quad.loaded = 0;
+		Quad.initAll();
+		return false;
+	}
+	
 	return false;
-
 }
 
 // =====================================================
 function drawScene() {
-
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	if(shadersOk()) {
 		Plane3D.draw();
+		Quad.draw();
 	}
-
 }
 
 
