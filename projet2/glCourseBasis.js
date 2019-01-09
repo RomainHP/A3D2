@@ -11,87 +11,6 @@ var objMatrix = mat4.create();
 
 
 
-
-// =====================================================
-// PLAN 3D, Support géométrique
-// =====================================================
-
-var Plane3D = { fname:'plane', loaded:-1, shader:null };
-
-// =====================================================
-Plane3D.initAll = function()
-{
-
-	vertices = [
-		-0.7, -0.7, 0.0,
-		 0.7, -0.7, 0.0,
-		 0.7,  0.7, 0.0,
-		-0.7,  0.7, 0.0
-	];
-
-	texcoords = [
-		0.0,0.0,
-		0.0,1.0,
-		1.0,1.0,
-		1.0,0.0
-	];
-
-	this.vBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-	this.vBuffer.itemSize = 3;
-	this.vBuffer.numItems = 4;
-
-	this.tBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texcoords), gl.STATIC_DRAW);
-	this.tBuffer.itemSize = 2;
-	this.tBuffer.numItems = 4;
-
-	console.log("Plane3D : init buffers ok.");
-
-	loadShaders(this);
-
-	console.log("Plane3D : shaders loading...");
-}
-
-
-// =====================================================
-Plane3D.setShadersParams = function()
-{
-	console.log("Plane3D : setting shader parameters...")
-
-	gl.useProgram(this.shader);
-
-	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
-	gl.enableVertexAttribArray(this.shader.vAttrib);
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	this.shader.tAttrib = gl.getAttribLocation(this.shader, "aTexCoords");
-	gl.enableVertexAttribArray(this.shader.tAttrib);
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
-	gl.vertexAttribPointer(this.shader.tAttrib,this.tBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
-	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
-
-	console.log("Plane3D : parameters ok.")
-
-}
-
-
-// =====================================================
-Plane3D.draw = function()
-{
-	if(this.shader) {		
-			this.setShadersParams();
-			setMatrixUniforms(this);
-			gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
-			gl.drawArrays(gl.LINE_LOOP, 0, this.vBuffer.numItems);
-	}
-}
-
 // =====================================================
 // Quad
 // =====================================================
@@ -114,19 +33,13 @@ Quad.initAll = function()
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 4;
 
-	console.log("Quad : init buffers ok.");
-
 	loadShaders(this);
-
-	console.log("Quad : shaders loading...");
 }
 
 
 // =====================================================
 Quad.setShadersParams = function()
 {
-	console.log("Quad : setting shader parameters...")
-
 	gl.useProgram(this.shader);
 
 	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
@@ -136,9 +49,6 @@ Quad.setShadersParams = function()
 
 	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
 	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
-
-	console.log("Quad : parameters ok.")
-
 }
 
 
@@ -247,6 +157,7 @@ function compileShaders(Obj3D)
 	gl.compileShader(Obj3D.fshader);
 	if (!gl.getShaderParameter(Obj3D.fshader, gl.COMPILE_STATUS)) {
 		console.log("Fragment Shader FAILED... "+Obj3D.fname+".fs");
+		console.log(gl.getShaderInfoLog(Obj3D.fshader));
 		return null;
 	}
 
@@ -283,13 +194,7 @@ function setMatrixUniforms(Obj3D) {
 // =====================================================
 function shadersOk()
 {
-	if(Plane3D.loaded == 4 && Quad.loaded == 4) return true;
-
-	if(Plane3D.loaded < 0) {
-		Plane3D.loaded = 0;
-		Plane3D.initAll();
-		return false;
-	}
+	if(Quad.loaded == 4) return true;
 
 	if(Quad.loaded < 0) {
 		Quad.loaded = 0;
@@ -304,7 +209,6 @@ function shadersOk()
 function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	if(shadersOk()) {
-		Plane3D.draw();
 		Quad.draw();
 	}
 }
