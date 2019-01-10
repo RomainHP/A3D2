@@ -9,7 +9,7 @@ varying vec3 vDirection;
 
 #define NB_LIGHTS       2
 #define NB_SPHERES      2
-#define NB_PLANES       1
+#define NB_PLANES       2
 
 #define NONE    0
 #define SPHERE  1
@@ -18,9 +18,9 @@ varying vec3 vDirection;
 //----------------------------------------------------------------------//
 struct Material
 {
-    vec3 kd;    // (entre 0 et 1, multiplie par -ks)
+    vec3 kd;
     float ks;
-    float n;    // (>0)
+    float n;
 };
 
 //----------------------------------------------------------------------//
@@ -102,13 +102,8 @@ float intersectionSphere(in Ray ray, in Sphere sphere)
 //----------------------------------------------------------------------//
 float intersectionPlane(in Ray ray, in Plane plane)
 {
-    float t = -1.0;
-    float dotRayPlane = dot(ray.direction,plane.normal);
-    if (dotRayPlane!=0.0){
-        vec3 planeOrigin = plane.normal * ray.origin;
-        t = ( - planeOrigin.x - planeOrigin.y - planeOrigin.z - plane.scal) 
-            / (ray.direction.x*plane.normal.x + ray.direction.y*plane.normal.y + ray.direction.z*plane.normal.z );
-    }
+    vec3 pointPlan = plane.normal * plane.scal;
+    float t = dot(pointPlan-ray.origin, plane.normal)/dot(ray.direction, plane.normal);
     return t;
 }
 
@@ -118,17 +113,19 @@ void createFixedScene(out Scene scene)
     // Materials
     Material material = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
     Material material2 = Material(vec3(0.1,0.1,0.9), 0.2, 30.0);
+    Material material3 = Material(vec3(0.9,0.9,0.9), 0.0, 0.0);
 
     // Lights
     scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
     scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(2.0,0.1,2.0));
 
     // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material);
-    scene.spheres[1] = Sphere(vec3(10.0,80.0,-3.0), 5.0, material2);
+    scene.spheres[0] = Sphere(vec3(0.0,100.0,2.0), 10.0, material);
+    scene.spheres[1] = Sphere(vec3(10.0,80.0,-2.6), 5.0, material2);
     
     // Planes
-    scene.planes[0] = Plane(vec3(1.0,50.0,1.0), 12.0, material); 
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -8.0, material3); 
+    scene.planes[1] = Plane(normalize(vec3(1.0,0.0,1.0)), -100.0, material3); 
 }
 
 //----------------------------------------------------------------------//
@@ -195,7 +192,7 @@ void main(void)
             renderinfo = RenderInfo(intersection, n, nearestSphere.material);
 
         } else if (objectType==PLANE) {
-            renderinfo = RenderInfo(intersection, nearestPlane.normal, nearestSphere.material);
+            renderinfo = RenderInfo(intersection, nearestPlane.normal, nearestPlane.material);
 
         }
 
