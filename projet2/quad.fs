@@ -55,7 +55,7 @@ struct Ray
 //----------------------------------------------------------------------//
 struct RenderInfo
 {
-  vec3 point;
+  vec3 intersection;
   vec3 normal;
   Material material;
 };
@@ -120,7 +120,7 @@ void createFixedScene(out Scene scene)
     Material material = Material(vec3(1.0,0.0,1.0), 0.2, 100.0);
 
     Light lights[NB_LIGHTS];
-    lights[0] = Light(vec3(-10.0,10.0,0.0), vec3(1.0,1.0,1.0));
+    lights[0] = Light(vec3(-40.0,10.0,0.0), vec3(1.0,1.0,1.0));
 
     Sphere spheres[NB_SPHERES];
     spheres[0] = Sphere(vec3(0.0,200.0,0.0), 10.0, material);
@@ -177,23 +177,23 @@ void main(void)
         for (int i=0; i<NB_LIGHTS; i++){
             Light light = scene.lights[i];
             RenderInfo renderinfo;
-            vec3 point = ray.direction*tmin + ray.origin;
+            vec3 intersection = ray.direction*tmin + ray.origin;
 
             if (objectType==SPHERE){
-                vec3 n = normalize(point-nearestSphere.center);
-                renderinfo = RenderInfo(point, n, nearestSphere.material);
-
+                vec3 n = normalize(intersection-nearestSphere.center);
+                renderinfo = RenderInfo(intersection, n, nearestSphere.material);
+                
             } else if (objectType==PLANE) {
-                renderinfo = RenderInfo(point, nearestPlane.normal, nearestSphere.material);
+                renderinfo = RenderInfo(intersection, nearestPlane.normal, nearestSphere.material);
+            }   
 
-            }
-
-            vec3 wi = normalize(light.position-renderinfo.point);
-            float cosTi = max(0.0,dot(wi,renderinfo.normal));
-            vec3 h = normalize(wi-ray.direction);
+            vec3 wi = normalize(light.position-renderinfo.intersection);
+            vec3 wo = normalize(-ray.direction);
+            vec3 h = normalize(wi+wo);
             float cosAlpha = max(0.0,dot(renderinfo.normal,h));
 
             //phong = kd/M_PI + vec3(ks) * (n+8)/8*M_PI * pow(cos(alpha),n);
+            //float cosTi = max(0.0,dot(wi,renderinfo.normal));
             //Lo += light.power * renderinfo.material.kd/M_PI * cosTi;
             Lo += renderinfo.material.kd/M_PI + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
         }
