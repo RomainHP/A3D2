@@ -6,10 +6,11 @@ varying vec3 vDirection;
 //----------------------------------------------------------------------//
 #define M_PI            3.141592653589793
 #define NEAR            50.0
+#define FAR             1000.0
 
 #define NB_LIGHTS       2
 #define NB_SPHERES      2
-#define NB_PLANES       2
+#define NB_PLANES       1
 
 #define NONE    0
 #define SPHERE  1
@@ -102,30 +103,50 @@ float intersectionSphere(in Ray ray, in Sphere sphere)
 //----------------------------------------------------------------------//
 float intersectionPlane(in Ray ray, in Plane plane)
 {
-    vec3 pointPlan = plane.normal * plane.scal;
-    float t = dot(pointPlan-ray.origin, plane.normal)/dot(ray.direction, plane.normal);
+    float t = -1.0;
+    float dotDn = dot(ray.direction, plane.normal);
+    if (dotDn!=0.0){
+        vec3 pointPlan = plane.normal * plane.scal;
+        t = dot(pointPlan-ray.origin, plane.normal)/dotDn;
+    }
     return t;
 }
 
 //----------------------------------------------------------------------//
-void createFixedScene(out Scene scene)
+bool isPointVisible(in Light light, in Scene scene, in vec3 point)
 {
-    // Materials
-    Material material = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
-    Material material2 = Material(vec3(0.1,0.1,0.9), 0.2, 30.0);
-    Material material3 = Material(vec3(0.9,0.9,0.9), 0.0, 0.0);
-
-    // Lights
-    scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
-    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(2.0,0.1,2.0));
-
-    // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,100.0,2.0), 10.0, material);
-    scene.spheres[1] = Sphere(vec3(10.0,80.0,-2.6), 5.0, material2);
-    
-    // Planes
-    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -8.0, material3); 
-    scene.planes[1] = Plane(normalize(vec3(1.0,0.0,1.0)), -100.0, material3); 
+    vec3 pointLight = point-light.position;
+    Ray rayLight = Ray(light.position, normalize(pointLight));
+    float normMin = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+    for (int i=0; i<NB_SPHERES; i++){
+        Sphere sphere = scene.spheres[i];
+        float t = intersectionSphere(rayLight, sphere);
+        float x = (point.x-sphere.center.x)*(point.x-sphere.center.x)
+                + (point.y-sphere.center.y)*(point.y-sphere.center.y)
+                + (point.z-sphere.center.z)*(point.z-sphere.center.z)
+                - sphere.radius*sphere.radius;
+        if (t>=0.0 && x!=0.0){
+            vec3 pt = rayLight.direction*t + rayLight.origin;
+            pointLight = pt-light.position;
+            float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+            if (norm<normMin){
+                return false;
+            }
+        }
+    }
+    for (int i=0; i<NB_PLANES; i++){
+        Plane plane = scene.planes[i];
+        float t = intersectionPlane(rayLight, plane);
+        if (t>=0.0){
+            vec3 pt = rayLight.direction*t + rayLight.origin;
+            pointLight = pt-light.position;
+            float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+            if (norm<normMin){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 //----------------------------------------------------------------------//
@@ -140,6 +161,26 @@ vec3 apply_phong(in Light light, in RenderInfo renderinfo, in vec3 wo)
     float cosTi = max(0.0,dot(wi,renderinfo.normal));
     vec3 Lo = light.power * brdf * cosTi;
     return Lo;
+}
+
+//----------------------------------------------------------------------//
+void createFixedScene(out Scene scene)
+{
+    // Materials
+    Material material = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
+    Material material2 = Material(vec3(0.1,0.1,0.9), 0.2, 30.0);
+    Material material3 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
+
+    // Lights
+    scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
+    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
+
+    // Spheres
+    scene.spheres[0] = Sphere(vec3(0.0,100.0,2.0), 10.0, material);
+    scene.spheres[1] = Sphere(vec3(10.0,80.0,-2.6), 5.0, material2);
+    
+    // Planes
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -8.0, material3);
 }
 
 //----------------------------------------------------------------------//
@@ -171,7 +212,7 @@ void main(void)
     for (int i=0; i<NB_PLANES; i++){
         Plane plane = scene.planes[i];
         float t = intersectionPlane(ray,plane);
-        if (t>=0.0){
+        if (t>=0.0 && t<=FAR){
             if (tmin==-1.0 || t<tmin) {
                 objectType = PLANE;
                 nearestPlane = plane;
@@ -184,7 +225,7 @@ void main(void)
     if (tmin>-1.0 && objectType!=NONE && NB_LIGHTS>0){
         RenderInfo renderinfo;
         vec3 intersection = ray.direction*tmin + ray.origin;
-        vec3 wo = normalize(ray.origin-ray.direction);
+        vec3 wo = normalize(-ray.direction);
 
         // calcul du renderinfo en fonction du type de l'objet
         if (objectType==SPHERE){
@@ -197,7 +238,9 @@ void main(void)
         }
 
         for (int i=0; i<NB_LIGHTS; i++){
-            Lo += apply_phong(scene.lights[i], renderinfo, wo);
+            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection)){
+                Lo += apply_phong(scene.lights[i], renderinfo, wo);
+            }
         }
     }
     gl_FragColor = vec4(Lo,1.0);
