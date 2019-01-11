@@ -42,6 +42,28 @@ function handleMouseDown(event) {
 	lastMouseY = event.clientY;
 }
 
+// =====================================================
+function onDocumentKeyPress( event ) {
+	var keyCode = event.which;
+	var positionDelta = 1;
+	//Z
+	if ( keyCode == 122 ){
+		rayOrigin[1] += positionDelta;
+	}
+	//Q
+	else if ( keyCode == 113 ){
+		rayOrigin[0] -= positionDelta;
+	}
+	//S
+	else if ( keyCode == 115 ){
+		rayOrigin[1] -= positionDelta;
+
+	}
+	//D
+	else if ( keyCode == 100 ){
+		rayOrigin[0] += positionDelta;
+	}
+}
 
 // =====================================================
 function handleMouseUp(event) {
@@ -57,7 +79,7 @@ function handleMouseMove(event) {
 
 	var newX = event.clientX;
 	var newY = event.clientY;
-
+	
 	var deltaX = newX - lastMouseX;
 	var deltaY = newY - lastMouseY;
 
@@ -68,6 +90,6 @@ function handleMouseMove(event) {
 	mat4.rotate(objMatrix, rotX, [1, 0, 0]);
 	mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
 
-	lastMouseX = newX
+	lastMouseX = newX;
 	lastMouseY = newY;
 }

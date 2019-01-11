@@ -113,35 +113,35 @@ float intersectionPlane(in Ray ray, in Plane plane)
 }
 
 //----------------------------------------------------------------------//
-bool isPointVisible(in Light light, in Scene scene, in vec3 point)
+bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objType, in int indice)
 {
     vec3 pointLight = point-light.position;
     Ray rayLight = Ray(light.position, normalize(pointLight));
-    float normMin = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+    float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
     for (int i=0; i<NB_SPHERES; i++){
+        // on verifie si le point appartient a l'objet en question
+        if (objType==SPHERE && indice==i) continue;
         Sphere sphere = scene.spheres[i];
         float t = intersectionSphere(rayLight, sphere);
-        float x = (point.x-sphere.center.x)*(point.x-sphere.center.x)
-                + (point.y-sphere.center.y)*(point.y-sphere.center.y)
-                + (point.z-sphere.center.z)*(point.z-sphere.center.z)
-                - sphere.radius*sphere.radius;
-        if (t>=0.0 && x!=0.0){
+        if (t>=0.0){
             vec3 pt = rayLight.direction*t + rayLight.origin;
             pointLight = pt-light.position;
             float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-            if (norm<normMin){
+            if (norm<normPoint){
                 return false;
             }
         }
     }
     for (int i=0; i<NB_PLANES; i++){
+        // on verifie si le point appartient a l'objet en question
+        if (objType==PLANE && indice==i) continue;
         Plane plane = scene.planes[i];
         float t = intersectionPlane(rayLight, plane);
         if (t>=0.0){
             vec3 pt = rayLight.direction*t + rayLight.origin;
             pointLight = pt-light.position;
             float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-            if (norm<normMin){
+            if (norm<normPoint){
                 return false;
             }
         }
@@ -161,6 +161,12 @@ vec3 apply_phong(in Light light, in RenderInfo renderinfo, in vec3 wo)
     float cosTi = max(0.0,dot(wi,renderinfo.normal));
     vec3 Lo = light.power * brdf * cosTi;
     return Lo;
+}
+
+//----------------------------------------------------------------------//
+void createRandomScene(in int nbMaxLights, in int nbMaxSpheres, in int nbMaxPlanes, out Scene scene)
+{
+    
 }
 
 //----------------------------------------------------------------------//
@@ -191,6 +197,7 @@ void main(void)
     Ray ray = Ray(vOrigin, normalize(vDirection));
 
     float tmin = -1.0;
+    int indice = 0;
     int objectType = NONE;  // type de l'objet le plus proche
 
     // calcul de la sphere la plus proche
@@ -200,6 +207,7 @@ void main(void)
         float t = intersectionSphere(ray, sphere);
         if (t>=0.0){
             if (tmin==-1.0 || t<tmin) {
+                indice = i;
                 objectType = SPHERE;
                 nearestSphere = sphere;
                 tmin = t;
@@ -214,6 +222,7 @@ void main(void)
         float t = intersectionPlane(ray,plane);
         if (t>=0.0 && t<=FAR){
             if (tmin==-1.0 || t<tmin) {
+                indice = i;
                 objectType = PLANE;
                 nearestPlane = plane;
                 tmin = t;
@@ -238,7 +247,8 @@ void main(void)
         }
 
         for (int i=0; i<NB_LIGHTS; i++){
-            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection)){
+            // on verifie que l'objet n'est pas cache par un autre
+            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection, objectType, indice)){
                 Lo += apply_phong(scene.lights[i], renderinfo, wo);
             }
         }

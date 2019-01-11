@@ -2,9 +2,9 @@
 // =====================================================
 var gl;
 // =====================================================
-var mvMatrix = mat4.create();
-var pMatrix = mat4.create();
 var objMatrix = mat4.create();
+var rayRotation = mat4.create();
+var rayOrigin = [0.0, 0.0, 0.0];
 // =====================================================
 
 
@@ -36,7 +36,6 @@ Quad.initAll = function()
 	loadShaders(this);
 }
 
-
 // =====================================================
 Quad.setShadersParams = function()
 {
@@ -47,18 +46,16 @@ Quad.setShadersParams = function()
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
-	this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
+	this.shader.rayOriginUniform = gl.getUniformLocation(this.shader, "uRayOrigin");
 }
-
 
 // =====================================================
 Quad.draw = function()
 {
 	if(this.shader) {		
-			this.setShadersParams();
-			setMatrixUniforms(this);
-			gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
+		this.setShadersParams();
+		setMatrixUniforms(this);
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
 	}
 }
 
@@ -68,18 +65,14 @@ Quad.draw = function()
 // FONCTIONS GENERALES, INITIALISATIONS
 // =====================================================
 
-
-
-
-
 // =====================================================
 function webGLStart() {
 	var canvas = document.getElementById("WebGL-test");
 
-	mat4.identity(objMatrix);
 	canvas.onmousedown = handleMouseDown;
 	document.onmouseup = handleMouseUp;
 	document.onmousemove = handleMouseMove;
+	document.addEventListener( 'keypress', onDocumentKeyPress, false );
 
 	initGL(canvas);
 
@@ -106,8 +99,6 @@ function initGL(canvas)
 	}
 }
 
-
-
 // =====================================================
 function loadShaders(Obj3D) {
 	loadShaderText(Obj3D,'.vs');
@@ -116,9 +107,9 @@ function loadShaders(Obj3D) {
 
 // =====================================================
 function loadShaderText(Obj3D,ext) {   // lecture asynchrone...
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (xhttp.readyState == 4 && xhttp.status == 200) {
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+	if (xhttp.readyState == 4 && xhttp.status == 200) {
 			if(ext=='.vs') { Obj3D.vsTxt = xhttp.responseText; Obj3D.loaded ++; }
 			if(ext=='.fs') { Obj3D.fsTxt = xhttp.responseText; Obj3D.loaded ++; }
 			if(Obj3D.loaded==2) {
@@ -128,11 +119,11 @@ function loadShaderText(Obj3D,ext) {   // lecture asynchrone...
 				console.log("Shader ok : "+Obj3D.fname+".");
 				Obj3D.loaded ++;
 			}
-    }
-  }
-  Obj3D.loaded = 0;
-  xhttp.open("GET", Obj3D.fname+ext, true);
-  xhttp.send();
+	}
+	}
+	Obj3D.loaded = 0;
+	xhttp.open("GET", Obj3D.fname+ext, true);
+	xhttp.send();
 }
 
 // =====================================================
@@ -177,19 +168,15 @@ function compileShaders(Obj3D)
 
 }
 
-
-
-
 // =====================================================
 function setMatrixUniforms(Obj3D) {
-		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
-		mat4.identity(mvMatrix);
-		mat4.translate(mvMatrix, [0.0, 0.0, -2.0]);
-		mat4.multiply(mvMatrix, objMatrix);
-		gl.uniformMatrix4fv(Obj3D.shader.pMatrixUniform, false, pMatrix);
-		gl.uniformMatrix4fv(Obj3D.shader.mvMatrixUniform, false, mvMatrix);
+	mat4.identity(rayRotation);
+	//mat4.translate(rayRotation, [0.0, 0.0, -2.0]);
+	mat4.multiply(rayRotation, objMatrix);
+	
+	gl.uniformMatrix4fv(Obj3D.shader.rayRotationUniform, false, rayRotation);
+	gl.uniform3fv(Obj3D.shader.rayOriginUniform, rayOrigin);
 }
-
 
 // =====================================================
 function shadersOk()
