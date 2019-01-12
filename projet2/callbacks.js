@@ -80,15 +80,15 @@ function handleMouseMove(event) {
 	var newX = event.clientX;
 	var newY = event.clientY;
 	
-	var deltaX = newX - lastMouseX;
-	var deltaY = newY - lastMouseY;
+	var deltaX = lastMouseX - newX;
+	var deltaY = lastMouseY - newY;
 
-	rotX += degToRad(deltaY / 2);
-	rotZ += degToRad(deltaX / 2);
+	rotX += degToRad(deltaY / 5);
+	rotZ += degToRad(deltaX / 5);
 
-	mat4.identity(objMatrix);
-	mat4.rotate(objMatrix, rotX, [1, 0, 0]);
-	mat4.rotate(objMatrix, rotZ, [0, 0, 1]);
+	mat4.identity(rayRotation);
+	mat4.rotate(rayRotation, rotZ, [0, 0, 1]);
+	mat4.rotate(rayRotation, rotX, [1, 0, 0]);
 
 	lastMouseX = newX;
 	lastMouseY = newY;

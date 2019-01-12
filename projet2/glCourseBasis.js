@@ -2,7 +2,6 @@
 // =====================================================
 var gl;
 // =====================================================
-var objMatrix = mat4.create();
 var rayRotation = mat4.create();
 var rayOrigin = [0.0, 0.0, 0.0];
 // =====================================================
@@ -47,6 +46,7 @@ Quad.setShadersParams = function()
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	this.shader.rayOriginUniform = gl.getUniformLocation(this.shader, "uRayOrigin");
+	this.shader.rayRotationUniform =  gl.getUniformLocation(this.shader, "uRayRotation");
 }
 
 // =====================================================
@@ -73,6 +73,8 @@ function webGLStart() {
 	document.onmouseup = handleMouseUp;
 	document.onmousemove = handleMouseMove;
 	document.addEventListener( 'keypress', onDocumentKeyPress, false );
+
+	mat4.identity(rayRotation);
 
 	initGL(canvas);
 
@@ -170,10 +172,6 @@ function compileShaders(Obj3D)
 
 // =====================================================
 function setMatrixUniforms(Obj3D) {
-	mat4.identity(rayRotation);
-	//mat4.translate(rayRotation, [0.0, 0.0, -2.0]);
-	mat4.multiply(rayRotation, objMatrix);
-	
 	gl.uniformMatrix4fv(Obj3D.shader.rayRotationUniform, false, rayRotation);
 	gl.uniform3fv(Obj3D.shader.rayOriginUniform, rayOrigin);
 }

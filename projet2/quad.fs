@@ -115,7 +115,7 @@ float intersectionPlane(in Ray ray, in Plane plane)
 //----------------------------------------------------------------------//
 bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objType, in int indice)
 {
-    vec3 pointLight = point-light.position;
+    vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
     Ray rayLight = Ray(light.position, normalize(pointLight));
     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
     for (int i=0; i<NB_SPHERES; i++){
@@ -156,17 +156,12 @@ vec3 apply_phong(in Light light, in RenderInfo renderinfo, in vec3 wo)
     vec3 h = normalize(wi+wo);
     float cosAlpha = max(0.0,dot(renderinfo.normal,h));
 
+    // formule de phong modifie
     vec3 brdf = renderinfo.material.kd/M_PI + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
 
     float cosTi = max(0.0,dot(wi,renderinfo.normal));
     vec3 Lo = light.power * brdf * cosTi;
     return Lo;
-}
-
-//----------------------------------------------------------------------//
-void createRandomScene(in int nbMaxLights, in int nbMaxSpheres, in int nbMaxPlanes, out Scene scene)
-{
-    
 }
 
 //----------------------------------------------------------------------//
