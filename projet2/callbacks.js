@@ -48,19 +48,19 @@ function onDocumentKeyPress( event ) {
 	var positionDelta = 1;
 	var deplacement = [0, 0, 0, 1];
 
-	//Z
+	// Z
 	if ( keyCode == 122 ){
 		deplacement[1] += positionDelta;
 	}
-	//Q
+	// Q
 	else if ( keyCode == 113 ){
 		deplacement[0] -= positionDelta;
 	}
-	//S
+	// S
 	else if ( keyCode == 115 ){
 		deplacement[1] -= positionDelta;
 	}
-	//D
+	// D
 	else if ( keyCode == 100 ){
 		deplacement[0] += positionDelta;
 	}

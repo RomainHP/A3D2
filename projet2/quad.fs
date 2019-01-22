@@ -9,7 +9,7 @@ varying vec3 vDirection;
 #define FAR             1000.0
 
 #define NB_LIGHTS       2
-#define NB_SPHERES      2
+#define NB_SPHERES      3
 #define NB_PLANES       1
 
 #define NONE    0
@@ -116,8 +116,10 @@ float intersectionPlane(in Ray ray, in Plane plane)
 bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objType, in int indice)
 {
     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
+    // on lance un rayon depuis la source de lumiere jusqu'au point en question
     Ray rayLight = Ray(light.position, normalize(pointLight));
     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+    // on teste pour chaque sphere si le rayon intersecte l'objet
     for (int i=0; i<NB_SPHERES; i++){
         // on verifie si le point appartient a l'objet en question
         if (objType==SPHERE && indice==i) continue;
@@ -128,10 +130,12 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objTyp
             pointLight = pt-light.position;
             float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
             if (norm<normPoint){
+                // si la distance du point est inferieur alors il cache le point que l'on teste
                 return false;
             }
         }
     }
+    // on fait la meme chose avec les plans
     for (int i=0; i<NB_PLANES; i++){
         // on verifie si le point appartient a l'objet en question
         if (objType==PLANE && indice==i) continue;
@@ -142,6 +146,7 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objTyp
             pointLight = pt-light.position;
             float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
             if (norm<normPoint){
+                // si la distance du point est inferieur alors il cache le point que l'on teste
                 return false;
             }
         }
@@ -168,20 +173,22 @@ vec3 apply_phong(in Light light, in RenderInfo renderinfo, in vec3 wo)
 void createFixedScene(out Scene scene)
 {
     // Materials
-    Material material = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
-    Material material2 = Material(vec3(0.1,0.1,0.9), 0.2, 30.0);
-    Material material3 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
+    Material material1 = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
+    Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
+    Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
+    Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
 
     // Lights
     scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
     scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
 
     // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,100.0,2.0), 10.0, material);
-    scene.spheres[1] = Sphere(vec3(10.0,80.0,-2.6), 5.0, material2);
+    scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material1);
+    scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
+    scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
     
     // Planes
-    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -8.0, material3);
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -10.0, material4);
 }
 
 //----------------------------------------------------------------------//
