@@ -46,23 +46,35 @@ function handleMouseDown(event) {
 function onDocumentKeyPress( event ) {
 	var keyCode = event.which;
 	var positionDelta = 1;
+	var deplacement = [0, 0, 0, 1];
+
 	//Z
 	if ( keyCode == 122 ){
-		rayOrigin[1] += positionDelta;
+		deplacement[1] += positionDelta;
 	}
 	//Q
 	else if ( keyCode == 113 ){
-		rayOrigin[0] -= positionDelta;
+		deplacement[0] -= positionDelta;
 	}
 	//S
 	else if ( keyCode == 115 ){
-		rayOrigin[1] -= positionDelta;
-
+		deplacement[1] -= positionDelta;
 	}
 	//D
 	else if ( keyCode == 100 ){
-		rayOrigin[0] += positionDelta;
+		deplacement[0] += positionDelta;
 	}
+	else{
+		return;
+	}
+
+	// Deplacement selon la rotation de la camera
+	var deplacementRotation = [0, 0, 0, 0];
+	mat4.multiplyVec4(rayRotation, deplacement, deplacementRotation);
+	
+	rayOrigin[0] += deplacementRotation[0];
+	rayOrigin[1] += deplacementRotation[1];
+	rayOrigin[2] += deplacementRotation[2];
 }
 
 // =====================================================
