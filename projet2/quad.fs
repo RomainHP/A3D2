@@ -8,6 +8,8 @@ varying vec3 vDirection;
 #define NEAR            50.0
 #define FAR             1000.0
 
+#define NB_REBONDS      5
+
 #define NB_LIGHTS       2
 #define NB_SPHERES      3
 #define NB_PLANES       1
@@ -170,33 +172,9 @@ vec3 apply_phong(in Light light, in RenderInfo renderinfo, in vec3 wo)
 }
 
 //----------------------------------------------------------------------//
-void createFixedScene(out Scene scene)
+vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 {
-    // Materials
-    Material material1 = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
-    Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
-    Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
-    Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
-
-    // Lights
-    scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
-    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
-
-    // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material1);
-    scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
-    scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
-    
-    // Planes
-    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -10.0, material4);
-}
-
-//----------------------------------------------------------------------//
-void main(void)
-{
-    Scene scene;
-    createFixedScene(scene);
-    Ray ray = Ray(vOrigin, normalize(vDirection));
+    vec3 Lo = vec3(0.0);    // par defaut la couleur est noire
 
     float tmin = -1.0;
     int indice = 0;
@@ -232,7 +210,6 @@ void main(void)
         }
     }
 
-    vec3 Lo = vec3(0.0);    // par defaut la couleur est noire
     if (tmin>-1.0 && objectType!=NONE && NB_LIGHTS>0){
         RenderInfo renderinfo;
         vec3 intersection = ray.direction*tmin + ray.origin;
@@ -255,5 +232,57 @@ void main(void)
             }
         }
     }
+
+    return Lo;
+}
+
+//----------------------------------------------------------------------//
+void createFixedScene(out Scene scene)
+{
+    // Materials
+    Material material1 = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
+    Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
+    Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
+    Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
+
+    // Lights
+    scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
+    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
+
+    // Spheres
+    scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material1);
+    scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
+    scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
+    
+    // Planes
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -10.0, material4);
+}
+
+//----------------------------------------------------------------------//
+void main(void)
+{
+    vec3 Lo = vec3(0.0);
+
+    Scene scene;
+    createFixedScene(scene);
+
+    RenderInfo renderinfo;
+    Ray ray = Ray(vOrigin, normalize(vDirection));
+    Lo += launch_ray(scene, ray, renderinfo);   // eclairement direct
+
+    // eclairement indirect
+    for (int i=0; i<NB_REBONDS; i++){
+        float theta = i/NB_REBONDS;
+        float phi = i/NB_REBONDS;
+        // vecteur direction en fonction de phi et theta
+        float x = sin(theta) * cos(phi);
+        float y = sin(theta) * sin(phi);
+        float z = cos(theta);
+        vec3 direction = vec3(x, y, z);
+        // lancer de rayon depuis le point d'intersection
+        ray = Ray(renderinfo.intersection, direction);
+        Lo += launch_ray(scene, ray, renderinfo);   // * 2PI/n
+    }
+
     gl_FragColor = vec4(Lo,1.0);
 }
