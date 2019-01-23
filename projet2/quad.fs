@@ -73,6 +73,11 @@ struct Scene
 };
 
 //----------------------------------------------------------------------//
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+//----------------------------------------------------------------------//
 float intersectionSphere(in Ray ray, in Sphere sphere)
 {
     vec3 origin = ray.origin - sphere.center;   // pour avoir (x-xc),(y-yc),(z-zc)
@@ -272,8 +277,8 @@ void main(void)
 
     // eclairement indirect
     for (int i=0; i<NB_REBONDS; i++){
-        float theta = i/NB_REBONDS;
-        float phi = i/NB_REBONDS;
+        float theta = rand(vec2(1.0));
+        float phi = rand(vec2(1.0));
         // vecteur direction en fonction de phi et theta
         float x = sin(theta) * cos(phi);
         float y = sin(theta) * sin(phi);
