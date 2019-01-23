@@ -10,8 +10,8 @@ varying vec3 vDirection;
 
 #define NB_REBONDS      5
 
-#define NB_LIGHTS       2
-#define NB_SPHERES      3
+#define NB_LIGHTS       1
+#define NB_SPHERES      1
 #define NB_PLANES       1
 
 #define NONE    0
@@ -251,13 +251,13 @@ void createFixedScene(out Scene scene)
     Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
 
     // Lights
-    scene.lights[0] = Light(vec3(-50.0,20.0,30.0), vec3(2.0,2.0,2.0));
-    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
+    scene.lights[0] = Light(vec3(0.0,90.0,30.0), vec3(2.0,2.0,2.0));
+    //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
 
     // Spheres
     scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material1);
-    scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
-    scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
+    //scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
+    //scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
     
     // Planes
     scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -10.0, material4);
@@ -276,18 +276,24 @@ void main(void)
     Lo += launch_ray(scene, ray, renderinfo);   // eclairement direct
 
     // eclairement indirect
+    vec3 Loi = vec3(0.0);
     for (int i=0; i<NB_REBONDS; i++){
+        vec3 i2 = cross(renderinfo.normal, vec3(1.0,0.0,0.0));
+        vec3 j = cross(renderinfo.normal, i2);
+        mat3 rotation = mat3(i2, j, renderinfo.normal);
         float theta = rand(vec2(1.0));
-        float phi = rand(vec2(1.0));
+        float phi = rand(vec2(1.0)) * 2.0 * M_PI;
         // vecteur direction en fonction de phi et theta
         float x = sin(theta) * cos(phi);
         float y = sin(theta) * sin(phi);
         float z = cos(theta);
-        vec3 direction = vec3(x, y, z);
+        vec3 direction = rotation * (vec3(x, y, z) - renderinfo.intersection);
         // lancer de rayon depuis le point d'intersection
         ray = Ray(renderinfo.intersection, direction);
-        Lo += launch_ray(scene, ray, renderinfo);   // * 2PI/n
+        Loi += launch_ray(scene, ray, renderinfo);
     }
+    float nb_float = float(NB_REBONDS);
+    Loi *= 2.0 * M_PI / nb_float;
 
-    gl_FragColor = vec4(Lo,1.0);
+    gl_FragColor = vec4(Lo+Loi,1.0);
 }
