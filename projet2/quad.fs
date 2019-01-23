@@ -9,7 +9,7 @@ varying vec3 vDirection;
 #define FAR             1000.0
 
 #define NB_LIGHTS       2
-#define NB_SPHERES      1
+#define NB_SPHERES      3
 #define NB_PLANES       1
 
 #define NONE    0
@@ -177,9 +177,8 @@ float rand(vec2 co){
 //----------------------------------------------------------------------//
 void createFixedScene(out Scene scene)
 {
-    vec2 randVect = vec2(1.0);
     // Materials
-    Material material1 = Material(vec3(rand(randVect)), 0.2, 50.0);
+    Material material1 = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
     Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
     Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
     Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
@@ -190,8 +189,8 @@ void createFixedScene(out Scene scene)
 
     // Spheres
     scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material1);
-    //scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
-    //scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
+    scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
+    scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
     
     // Planes
     scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -10.0, material4);
