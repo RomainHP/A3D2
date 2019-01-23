@@ -8,11 +8,11 @@ varying vec3 vDirection;
 #define NEAR            50.0
 #define FAR             1000.0
 
-#define NB_REBONDS      5
+#define NB_REBONDS      1
 
 #define NB_LIGHTS       1
 #define NB_SPHERES      1
-#define NB_PLANES       1
+#define NB_PLANES       2
 
 #define NONE    0
 #define SPHERE  1
@@ -73,7 +73,8 @@ struct Scene
 };
 
 //----------------------------------------------------------------------//
-float rand(vec2 co){
+float rand(vec2 co)
+{
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
@@ -110,11 +111,11 @@ float intersectionSphere(in Ray ray, in Sphere sphere)
 //----------------------------------------------------------------------//
 float intersectionPlane(in Ray ray, in Plane plane)
 {
-    float t = -1.0;
-    float dotDn = dot(ray.direction, plane.normal);
-    if (dotDn!=0.0){
-        vec3 pointPlan = plane.normal * plane.scal;
-        t = dot(pointPlan-ray.origin, plane.normal)/dotDn;
+    float num = - plane.scal - dot(ray.origin,plane.normal);
+    float denom = dot(ray.direction, plane.normal);
+    float t = num/denom;
+    if (t>FAR) {
+        t = -1.0;
     }
     return t;
 }
@@ -260,7 +261,8 @@ void createFixedScene(out Scene scene)
     //scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
     
     // Planes
-    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), -10.0, material4);
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), 10.0, material4);
+    scene.planes[1] = Plane(normalize(vec3(0.0,-1.0,0.0)), 200.0, material4);
 }
 
 //----------------------------------------------------------------------//
@@ -289,8 +291,8 @@ void main(void)
         float z = cos(theta);
         vec3 direction = rotation * (vec3(x, y, z) - renderinfo.intersection);
         // lancer de rayon depuis le point d'intersection
-        ray = Ray(renderinfo.intersection, direction);
-        Loi += launch_ray(scene, ray, renderinfo);
+        ray = Ray(renderinfo.intersection, normalize(direction));
+        //Loi += launch_ray(scene, ray, renderinfo);
     }
     float nb_float = float(NB_REBONDS);
     Loi *= 2.0 * M_PI / nb_float;
