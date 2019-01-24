@@ -9,7 +9,8 @@ varying float vRandom;
 #define NEAR            50.0
 #define FAR             1000.0
 
-#define NB_REBONDS      1
+#define NB_REBONDS      5
+#define NB_DIR          1
 
 #define NB_LIGHTS       1
 #define NB_SPHERES      1
@@ -71,6 +72,14 @@ struct Scene
     Light[NB_LIGHTS] lights;
     Sphere[NB_SPHERES] spheres;
     Plane[NB_PLANES] planes;
+};
+
+//----------------------------------------------------------------------//
+struct Data
+{
+    vec3[NB_REBONDS] Lo;
+    vec3[NB_REBONDS] wo;
+    RenderInfo[NB_REBONDS] renderinfo;
 };
 
 //----------------------------------------------------------------------//
@@ -164,18 +173,15 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objTyp
 }
 
 //----------------------------------------------------------------------//
-vec3 apply_phong(in Light light, in RenderInfo renderinfo, in vec3 wo)
+vec3 apply_phong(in RenderInfo renderinfo, in vec3 wi, in vec3 wo)
 {
-    vec3 wi = normalize(light.position-renderinfo.intersection);
     vec3 h = normalize(wi+wo);
     float cosAlpha = max(0.0,dot(renderinfo.normal,h));
 
     // formule de phong modifie
     vec3 brdf = renderinfo.material.kd/M_PI + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
 
-    float cosTi = max(0.0,dot(wi,renderinfo.normal));
-    vec3 Lo = light.power * brdf * cosTi;
-    return Lo;
+    return brdf;
 }
 
 //----------------------------------------------------------------------//
@@ -235,7 +241,9 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
         for (int i=0; i<NB_LIGHTS; i++){
             // on verifie que l'objet n'est pas cache par un autre
             if (isPointVisible(scene.lights[i], scene, renderinfo.intersection, objectType, indice)){
-                Lo += apply_phong(scene.lights[i], renderinfo, wo);
+                vec3 wi = normalize(scene.lights[i].position-renderinfo.intersection);
+                float cosTi = max(0.0,dot(wi,renderinfo.normal));
+                Lo += scene.lights[i].power * apply_phong(renderinfo, wi, wo) * cosTi;
             }
         }
     }
@@ -280,8 +288,13 @@ void main(void)
 
     // eclairement indirect
     vec3 Loi = vec3(0.0);
-    for (int k=0; k<NB_REBONDS; k++){
-        vec3 i = cross(renderinfo.normal, vec3(1.0,0.0,0.0));
+    Data data;
+    for (int k=0; k<NB_REBONDS; k++) {
+        vec3 tmp = vec3(1.0,0.0,0.0);
+        if (dot(tmp,renderinfo.normal)){
+
+        }
+        vec3 i = cross(renderinfo.normal, tmp);
         vec3 j = cross(renderinfo.normal, i);
         mat3 rotation = mat3(i, j, renderinfo.normal);
         float theta = acos(rand(renderinfo.intersection));
@@ -292,10 +305,21 @@ void main(void)
         float z = cos(theta);
         vec3 direction = rotation * (vec3(x, y, z) - renderinfo.intersection);
         // lancer de rayon depuis le point d'intersection
-        ray = Ray(renderinfo.intersection, normalize(direction));
-        Loi += launch_ray(scene, ray, renderinfo);
+        ray = Ray(renderinfo.intersection, normalize(direction));   
+        data.Lo[k] = launch_ray(scene, ray, renderinfo);
+        data.wo[k] = normalize(- ray.direction);
+        data.renderinfo[k] = renderinfo;
     }
-    Loi *= 2.0 * M_PI / float(NB_REBONDS);
+
+    for (int k=NB_REBONDS-2; k>=0; k--) {
+        vec3 wo = data.wo[k];
+        vec3 wi = normalize(data.renderinfo[k+1].intersection-data.renderinfo[k].intersection);
+        float cosTi = max(0.0,dot(wi,data.renderinfo[k].normal));
+        data.Lo[k] += data.Lo[k+1] * apply_phong(data.renderinfo[k], wi, wo) * cosTi;
+    }
+
+    Loi = data.Lo[0];
+    Loi *= 2.0 * M_PI / float(NB_DIR);
 
     gl_FragColor = vec4(Lo+Loi,1.0);
 }
