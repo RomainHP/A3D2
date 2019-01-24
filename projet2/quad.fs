@@ -2,6 +2,7 @@ precision mediump float;
 
 varying vec3 vOrigin;
 varying vec3 vDirection;
+varying float vRandom;
 
 //----------------------------------------------------------------------//
 #define M_PI            3.141592653589793
@@ -37,45 +38,45 @@ struct Plane
 //----------------------------------------------------------------------//
 struct Sphere
 {
-  vec3 center;
-  float radius;
-  Material material;
+    vec3 center;
+    float radius;
+    Material material;
 };
 
 //----------------------------------------------------------------------//
 struct Light
 {
-  vec3 position;
-  vec3 power;
+    vec3 position;
+    vec3 power;
 };
 
 //----------------------------------------------------------------------//
 struct Ray
 {
-  vec3 origin;
-  vec3 direction;
+    vec3 origin;
+    vec3 direction;
 };
 
 //----------------------------------------------------------------------//
 struct RenderInfo
 {
-  vec3 intersection;
-  vec3 normal;
-  Material material;
+    vec3 intersection;
+    vec3 normal;
+    Material material;
 };
 
 //----------------------------------------------------------------------//
 struct Scene
 {
-  Light[NB_LIGHTS] lights;
-  Sphere[NB_SPHERES] spheres;
-  Plane[NB_PLANES] planes;
+    Light[NB_LIGHTS] lights;
+    Sphere[NB_SPHERES] spheres;
+    Plane[NB_PLANES] planes;
 };
 
 //----------------------------------------------------------------------//
-float rand(vec2 co)
+float rand(vec3 co)
 {
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+    return fract(sin(dot(co.xy * vRandom,vec2(12.9898,78.233))) * 43758.5453);
 }
 
 //----------------------------------------------------------------------//
@@ -249,14 +250,14 @@ void createFixedScene(out Scene scene)
     Material material1 = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
     Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
     Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
-    Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 30.0);
+    Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 5.0);
 
     // Lights
     scene.lights[0] = Light(vec3(0.0,90.0,30.0), vec3(2.0,2.0,2.0));
     //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
 
     // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,100.0,0.0), 10.0, material1);
+    scene.spheres[0] = Sphere(vec3(0.0,100.0,5.0), 10.0, material1);
     //scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
     //scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
     
@@ -279,12 +280,12 @@ void main(void)
 
     // eclairement indirect
     vec3 Loi = vec3(0.0);
-    for (int i=0; i<NB_REBONDS; i++){
-        vec3 i2 = cross(renderinfo.normal, vec3(1.0,0.0,0.0));
-        vec3 j = cross(renderinfo.normal, i2);
-        mat3 rotation = mat3(i2, j, renderinfo.normal);
-        float theta = rand(vec2(1.0));
-        float phi = rand(vec2(1.0)) * 2.0 * M_PI;
+    for (int k=0; k<NB_REBONDS; k++){
+        vec3 i = cross(renderinfo.normal, vec3(1.0,0.0,0.0));
+        vec3 j = cross(renderinfo.normal, i);
+        mat3 rotation = mat3(i, j, renderinfo.normal);
+        float theta = acos(rand(renderinfo.intersection));
+        float phi = rand(renderinfo.intersection) * 2.0 * M_PI;
         // vecteur direction en fonction de phi et theta
         float x = sin(theta) * cos(phi);
         float y = sin(theta) * sin(phi);
@@ -292,10 +293,9 @@ void main(void)
         vec3 direction = rotation * (vec3(x, y, z) - renderinfo.intersection);
         // lancer de rayon depuis le point d'intersection
         ray = Ray(renderinfo.intersection, normalize(direction));
-        //Loi += launch_ray(scene, ray, renderinfo);
+        Loi += launch_ray(scene, ray, renderinfo);
     }
-    float nb_float = float(NB_REBONDS);
-    Loi *= 2.0 * M_PI / nb_float;
+    Loi *= 2.0 * M_PI / float(NB_REBONDS);
 
     gl_FragColor = vec4(Lo+Loi,1.0);
 }

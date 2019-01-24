@@ -4,6 +4,7 @@ var gl;
 // =====================================================
 var rayRotation = mat4.create();
 var rayOrigin = [0.0, 0.0, 0.0];
+var random = 0.0;
 // =====================================================
 
 
@@ -47,6 +48,7 @@ Quad.setShadersParams = function()
 
 	this.shader.rayOriginUniform = gl.getUniformLocation(this.shader, "uRayOrigin");
 	this.shader.rayRotationUniform =  gl.getUniformLocation(this.shader, "uRayRotation");
+	this.shader.randomUniform =  gl.getUniformLocation(this.shader, "uRandom");
 }
 
 // =====================================================
@@ -174,6 +176,7 @@ function compileShaders(Obj3D)
 function setMatrixUniforms(Obj3D) {
 	gl.uniformMatrix4fv(Obj3D.shader.rayRotationUniform, false, rayRotation);
 	gl.uniform3fv(Obj3D.shader.rayOriginUniform, rayOrigin);
+	gl.uniform1f(Obj3D.shader.randomUniform, random);
 }
 
 // =====================================================

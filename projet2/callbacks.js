@@ -27,6 +27,7 @@ window.requestAnimFrame = (function()
 // ==========================================
 function tick() {
 	requestAnimFrame(tick);
+	random = Math.random();
 	drawScene();
 }
 
