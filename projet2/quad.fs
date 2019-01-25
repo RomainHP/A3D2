@@ -188,7 +188,8 @@ vec3 apply_phong(in RenderInfo renderinfo, in vec3 wi, in vec3 wo)
 //----------------------------------------------------------------------//
 vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 {
-    renderinfo = RenderInfo(NONE, vec3(0.0), vec3(0.0), Material(vec3(0.0),0.0,0.0));
+    // Par défaut aucun objet n'est touché
+    renderinfo.objectType = NONE;
     
     vec3 Lo = vec3(0.0);    // par defaut la couleur est noire
 
@@ -228,14 +229,18 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 
     if (tmin>-1.0 && objectType!=NONE && NB_LIGHTS>0){
         vec3 intersection = ray.direction*tmin + ray.origin;
-        vec3 wo = normalize(-ray.direction);
+        renderinfo.intersection = intersection;
+        renderinfo.objectType=objectType;
 
+        vec3 wo = normalize(-ray.direction);
         // calcul du renderinfo en fonction du type de l'objet
         if (objectType==SPHERE){
             vec3 n = normalize(intersection-nearestSphere.center);
-            renderinfo = RenderInfo(SPHERE, intersection, n, nearestSphere.material);
+            renderinfo.material = nearestSphere.material;
+            renderinfo.normal = n;
         } else if (objectType==PLANE) {
-            renderinfo = RenderInfo(PLANE, intersection, nearestPlane.normal, nearestPlane.material);
+            renderinfo.material = nearestPlane.material;
+            renderinfo.normal = nearestPlane.normal;
         }
 
         for (int i=0; i<NB_LIGHTS; i++){
