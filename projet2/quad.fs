@@ -290,11 +290,11 @@ void main(void)
     vec3 Loi = vec3(0.0);
     Data data;
     for (int k=0; k<NB_REBONDS; k++) {
-        vec3 tmp = vec3(1.0,0.0,0.0);
-        if (dot(tmp,renderinfo.normal)){
-
+        vec3 vecTmp = vec3(1.0,0.0,0.0);
+        if (dot(vecTmp,renderinfo.normal)==0.0){
+            vecTmp = vec3(0.0,1.0,0.0);
         }
-        vec3 i = cross(renderinfo.normal, tmp);
+        vec3 i = cross(renderinfo.normal, vecTmp);
         vec3 j = cross(renderinfo.normal, i);
         mat3 rotation = mat3(i, j, renderinfo.normal);
         float theta = acos(rand(renderinfo.intersection));
