@@ -61,6 +61,7 @@ struct Ray
 //----------------------------------------------------------------------//
 struct RenderInfo
 {
+    int objectType;
     vec3 intersection;
     vec3 normal;
     Material material;
@@ -187,6 +188,8 @@ vec3 apply_phong(in RenderInfo renderinfo, in vec3 wi, in vec3 wo)
 //----------------------------------------------------------------------//
 vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 {
+    renderinfo = RenderInfo(NONE, vec3(0.0), vec3(0.0), Material(vec3(0.0),0.0,0.0));
+    
     vec3 Lo = vec3(0.0);    // par defaut la couleur est noire
 
     float tmin = -1.0;
@@ -224,18 +227,15 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
     }
 
     if (tmin>-1.0 && objectType!=NONE && NB_LIGHTS>0){
-        RenderInfo renderinfo;
         vec3 intersection = ray.direction*tmin + ray.origin;
         vec3 wo = normalize(-ray.direction);
 
         // calcul du renderinfo en fonction du type de l'objet
         if (objectType==SPHERE){
             vec3 n = normalize(intersection-nearestSphere.center);
-            renderinfo = RenderInfo(intersection, n, nearestSphere.material);
-
+            renderinfo = RenderInfo(SPHERE, intersection, n, nearestSphere.material);
         } else if (objectType==PLANE) {
-            renderinfo = RenderInfo(intersection, nearestPlane.normal, nearestPlane.material);
-
+            renderinfo = RenderInfo(PLANE, intersection, nearestPlane.normal, nearestPlane.material);
         }
 
         for (int i=0; i<NB_LIGHTS; i++){
@@ -290,6 +290,9 @@ void main(void)
     vec3 Loi = vec3(0.0);
     Data data;
     for (int k=0; k<NB_REBONDS; k++) {
+        if (renderinfo.objectType==NONE) {
+            break;
+        }
         vec3 vecTmp = vec3(1.0,0.0,0.0);
         if (dot(vecTmp,renderinfo.normal)==0.0){
             vecTmp = vec3(0.0,1.0,0.0);
