@@ -9,10 +9,10 @@ varying float vRandom;
 #define NEAR            50.0
 #define FAR             1000.0
 
-#define NB_REBONDS      5
+#define NB_REBONDS      1
 #define NB_DIR          1
 
-#define NB_LIGHTS       1
+#define NB_LIGHTS       2
 #define NB_SPHERES      1
 #define NB_PLANES       2
 
@@ -87,6 +87,26 @@ struct Data
 float rand(vec3 co)
 {
     return fract(sin(dot(co.xy * vRandom,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+//----------------------------------------------------------------------//
+Sphere getSphere(in Scene scene, int indice)
+{
+    for(int i=0; i<NB_SPHERES; i++){
+        if(i==indice){
+            return scene.spheres[i];
+        }	
+    }
+}
+
+//----------------------------------------------------------------------//
+Plane getPlane(in Scene scene, int indice)
+{
+    for(int i=0; i<NB_PLANES; i++){
+        if(i==indice){
+            return scene.planes[i];
+        }	
+    }
 }
 
 //----------------------------------------------------------------------//
@@ -176,29 +196,28 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objTyp
 //----------------------------------------------------------------------//
 vec3 apply_phong(in RenderInfo renderinfo, in vec3 wi, in vec3 wo)
 {
+    vec3 lambert = renderinfo.material.kd/M_PI;
+
     vec3 h = normalize(wi+wo);
     float cosAlpha = max(0.0,dot(renderinfo.normal,h));
 
     // formule de phong modifie
-    vec3 brdf = renderinfo.material.kd/M_PI + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
+    vec3 brdf = lambert + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
 
     return brdf;
 }
 
 //----------------------------------------------------------------------//
-vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
+int intersection(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 {
     // Par défaut aucun objet n'est touché
     renderinfo.objectType = NONE;
-    
-    vec3 Lo = vec3(0.0);    // par defaut la couleur est noire
 
     float tmin = -1.0;
-    int indice = 0;
+    int indice = -1;
     int objectType = NONE;  // type de l'objet le plus proche
 
     // calcul de la sphere la plus proche
-    Sphere nearestSphere;
     for (int i=0; i<NB_SPHERES; i++){
         Sphere sphere = scene.spheres[i];
         float t = intersectionSphere(ray, sphere);
@@ -206,14 +225,12 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
             if (tmin==-1.0 || t<tmin) {
                 indice = i;
                 objectType = SPHERE;
-                nearestSphere = sphere;
                 tmin = t;
             }
         }
     }
 
     // calcul du plan le plus proche
-    Plane nearestPlane;
     for (int i=0; i<NB_PLANES; i++){
         Plane plane = scene.planes[i];
         float t = intersectionPlane(ray,plane);
@@ -221,31 +238,42 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
             if (tmin==-1.0 || t<tmin) {
                 indice = i;
                 objectType = PLANE;
-                nearestPlane = plane;
                 tmin = t;
             }
         }
     }
 
-    if (tmin>-1.0 && objectType!=NONE && NB_LIGHTS>0){
-        vec3 intersection = ray.direction*tmin + ray.origin;
-        renderinfo.intersection = intersection;
-        renderinfo.objectType=objectType;
+    vec3 intersection = ray.direction*tmin + ray.origin;
+    renderinfo.intersection = intersection;
+    renderinfo.objectType=objectType;
 
-        vec3 wo = normalize(-ray.direction);
+    return indice;
+}
+
+//----------------------------------------------------------------------//
+vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
+{
+    vec3 Lo = vec3(0.0);    // par defaut la couleur est noire
+
+    int indice = intersection(scene, ray, renderinfo);
+
+    if (indice>-1 && renderinfo.objectType!=NONE && NB_LIGHTS>0){
+        vec3 wo = normalize(ray.origin - renderinfo.intersection);
         // calcul du renderinfo en fonction du type de l'objet
-        if (objectType==SPHERE){
-            vec3 n = normalize(intersection-nearestSphere.center);
+        if (renderinfo.objectType==SPHERE){
+            Sphere nearestSphere = getSphere(scene, indice);
+            vec3 n = normalize(renderinfo.intersection-nearestSphere.center);
             renderinfo.material = nearestSphere.material;
             renderinfo.normal = n;
-        } else if (objectType==PLANE) {
+        } else if (renderinfo.objectType==PLANE) {
+            Plane nearestPlane = getPlane(scene, indice);
             renderinfo.material = nearestPlane.material;
             renderinfo.normal = nearestPlane.normal;
         }
 
         for (int i=0; i<NB_LIGHTS; i++){
             // on verifie que l'objet n'est pas cache par un autre
-            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection, objectType, indice)){
+            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection, renderinfo.objectType, indice)){
                 vec3 wi = normalize(scene.lights[i].position-renderinfo.intersection);
                 float cosTi = max(0.0,dot(wi,renderinfo.normal));
                 Lo += scene.lights[i].power * apply_phong(renderinfo, wi, wo) * cosTi;
@@ -254,6 +282,61 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
     }
 
     return Lo;
+}
+
+//----------------------------------------------------------------------//
+vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
+{
+    vec3 Loi = vec3(0.0);
+    Data data;
+    Ray ray;
+
+    if (NB_REBONDS<=0) return Loi;
+
+    for (int k=0; k<NB_REBONDS; k++) {
+        // si aucun objet n'est touche, on arrete
+        if (renderinfo.objectType==NONE) break;
+        RenderInfo previousRenderInfo = renderinfo;
+        // pour recuperer le renderinfo precedent
+        if (k>0) previousRenderInfo = data.renderinfo[k-1];
+        // rotation dans la demi-sphere exterieure
+        vec3 vecTmp = vec3(1.0,0.0,0.0);
+        if (dot(vecTmp,renderinfo.normal)==0.0){
+            vecTmp = vec3(0.0,1.0,0.0);
+        }
+        vec3 i = cross(renderinfo.normal, vecTmp);
+        vec3 j = cross(renderinfo.normal, i);
+        mat3 rotation = mat3(i, j, previousRenderInfo.normal);
+        float theta = acos(rand(previousRenderInfo.intersection));
+        float phi = rand(previousRenderInfo.intersection) * 2.0 * M_PI;
+        // vecteur direction en fonction de phi et theta
+        float x = sin(theta) * cos(phi);
+        float y = sin(theta) * sin(phi);
+        float z = cos(theta);
+        vec3 direction = rotation * (vec3(x, y, z) - previousRenderInfo.intersection);
+        // lancer de rayon depuis le point d'intersection
+        ray.origin = previousRenderInfo.intersection;
+        ray.direction = normalize(direction);
+        data.Lo[k] = launch_ray(scene, ray, data.renderinfo[k]);
+        data.wo[k] = normalize(ray.origin - data.renderinfo[k].intersection);
+    }
+
+    for (int k=NB_REBONDS-2; k>=0; k--) {
+        if (data.renderinfo[k+1].objectType!=NONE) {
+            vec3 wo = data.wo[k];
+            vec3 wi = normalize(data.renderinfo[k+1].intersection-data.renderinfo[k].intersection);
+            float cosTi = max(0.0,dot(wi,data.renderinfo[k].normal));
+            data.Lo[k] += data.Lo[k+1] * apply_phong(data.renderinfo[k], wi, wo) * cosTi;
+        }
+    }
+
+    vec3 wo = normalize(vOrigin - renderinfo.intersection);
+    vec3 wi = normalize(data.renderinfo[0].intersection-renderinfo.intersection);
+    float cosTi = max(0.0,dot(wi,renderinfo.normal));
+    Loi += data.Lo[0] * apply_phong(renderinfo, wi, wo) * cosTi;
+    Loi *= 2.0 * M_PI / float(NB_DIR);
+
+    return Loi;
 }
 
 //----------------------------------------------------------------------//
@@ -266,8 +349,8 @@ void createFixedScene(out Scene scene)
     Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 5.0);
 
     // Lights
-    scene.lights[0] = Light(vec3(0.0,90.0,30.0), vec3(2.0,2.0,2.0));
-    //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(1.0,0.1,1.0));
+    scene.lights[0] = Light(vec3(0.0,20.0,5.0), vec3(2.0,2.0,2.0));
+    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.1,0.1,0.7));
 
     // Spheres
     scene.spheres[0] = Sphere(vec3(0.0,100.0,5.0), 10.0, material1);
@@ -282,52 +365,14 @@ void createFixedScene(out Scene scene)
 //----------------------------------------------------------------------//
 void main(void)
 {
-    vec3 Lo = vec3(0.0);
-
     Scene scene;
     createFixedScene(scene);
 
     RenderInfo renderinfo;
     Ray ray = Ray(vOrigin, normalize(vDirection));
-    Lo += launch_ray(scene, ray, renderinfo);   // eclairement direct
+    vec3 Lo = launch_ray(scene, ray, renderinfo);   // eclairement direct
 
-    // eclairement indirect
-    vec3 Loi = vec3(0.0);
-    Data data;
-    for (int k=0; k<NB_REBONDS; k++) {
-        if (renderinfo.objectType==NONE) {
-            break;
-        }
-        vec3 vecTmp = vec3(1.0,0.0,0.0);
-        if (dot(vecTmp,renderinfo.normal)==0.0){
-            vecTmp = vec3(0.0,1.0,0.0);
-        }
-        vec3 i = cross(renderinfo.normal, vecTmp);
-        vec3 j = cross(renderinfo.normal, i);
-        mat3 rotation = mat3(i, j, renderinfo.normal);
-        float theta = acos(rand(renderinfo.intersection));
-        float phi = rand(renderinfo.intersection) * 2.0 * M_PI;
-        // vecteur direction en fonction de phi et theta
-        float x = sin(theta) * cos(phi);
-        float y = sin(theta) * sin(phi);
-        float z = cos(theta);
-        vec3 direction = rotation * (vec3(x, y, z) - renderinfo.intersection);
-        // lancer de rayon depuis le point d'intersection
-        ray = Ray(renderinfo.intersection, normalize(direction));   
-        data.Lo[k] = launch_ray(scene, ray, renderinfo);
-        data.wo[k] = normalize(- ray.direction);
-        data.renderinfo[k] = renderinfo;
-    }
-
-    for (int k=NB_REBONDS-2; k>=0; k--) {
-        vec3 wo = data.wo[k];
-        vec3 wi = normalize(data.renderinfo[k+1].intersection-data.renderinfo[k].intersection);
-        float cosTi = max(0.0,dot(wi,data.renderinfo[k].normal));
-        data.Lo[k] += data.Lo[k+1] * apply_phong(data.renderinfo[k], wi, wo) * cosTi;
-    }
-
-    Loi = data.Lo[0];
-    Loi *= 2.0 * M_PI / float(NB_DIR);
+    vec3 Loi = getIndirectLight(scene, renderinfo);
 
     gl_FragColor = vec4(Lo+Loi,1.0);
 }
