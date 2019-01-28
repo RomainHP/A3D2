@@ -76,6 +76,7 @@ function onDocumentKeyPress( event ) {
 	rayOrigin[0] += deplacementRotation[0];
 	rayOrigin[1] += deplacementRotation[1];
 	rayOrigin[2] += deplacementRotation[2];
+	PathTracing.resetTextures();
 }
 
 // =====================================================
@@ -105,4 +106,5 @@ function handleMouseMove(event) {
 
 	lastMouseX = newX;
 	lastMouseY = newY;
+	PathTracing.resetTextures();
 }

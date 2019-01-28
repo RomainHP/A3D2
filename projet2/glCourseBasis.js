@@ -6,8 +6,61 @@ var rayRotation = mat4.create();
 var rayOrigin = [0.0, 0.0, 0.0];
 var random = 0.0;
 var focal = 50.0;
+var rayPerPixel = 1;
 // =====================================================
 
+
+
+
+
+// =====================================================
+// Canvas
+// =====================================================
+
+var Canvas = { fname:'Canvas', loaded:-1, shader:null };
+
+// =====================================================
+Canvas.initAll = function()
+{
+	vertices = [
+		-1.0, -1.0, 0.0,
+		 1.0, -1.0, 0.0,
+		 1.0,  1.0, 0.0,
+		-1.0,  1.0, 0.0
+	];
+
+	this.vBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	this.vBuffer.itemSize = 3;
+	this.vBuffer.numItems = 4;
+
+	loadShaders(this);
+}
+
+// =====================================================
+Canvas.setShadersParams = function()
+{
+	gl.useProgram(this.shader);
+
+	this.shader.vAttrib = gl.getAttribLocation(this.shader, "aVertexPosition");
+	gl.enableVertexAttribArray(this.shader.vAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
+}
+
+// =====================================================
+Canvas.draw = function()
+{
+	if(this.shader) {
+		this.setShadersParams();
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		// Ici, vu qu'on n'attache aucun framebuffer,
+		// alors le fragment shader ira ecrire dans le canva
+		gl.clear(gl.COLOR_BUFFER_BIT); // nettoyage du canvas
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
+	}
+}
 
 
 
@@ -34,7 +87,19 @@ PathTracing.initAll = function()
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 4;
 
-	loadShaders(this);
+	// creation du frame buffer
+    this.fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
+        || gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_UNSUPPORTED) {
+        console.log("Framebuffer attachment: FAILED")
+    }
+
+    // creation des deux textures
+    this.texIN = createTexture();
+	this.texOUT = createTexture();
+
+    loadShaders(this);
 }
 
 // =====================================================
@@ -47,6 +112,11 @@ PathTracing.setShadersParams = function()
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+	// on lie la texture qui sera utilisee en lecture par pathtracing.fs
+	gl.uniform1i(gl.getUniformLocation(this.shader, "uTex"), 0);
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, this.texIN);
+
 	this.shader.rayOriginUniform = gl.getUniformLocation(this.shader, "uRayOrigin");
 	this.shader.rayRotationUniform =  gl.getUniformLocation(this.shader, "uRayRotation");
 	this.shader.randomUniform =  gl.getUniformLocation(this.shader, "uRandom");
@@ -56,18 +126,61 @@ PathTracing.setShadersParams = function()
 // =====================================================
 PathTracing.draw = function()
 {
-	if(this.shader) {		
-		this.setShadersParams();
+	if(this.shader) {
+		this.setShadersParams()
 		setMatrixUniforms(this);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+		// bindFramebuffer permet d'indiquer que le gl.drawXXX (ou gl.clear) ira
+		// modifier la texture attachee au framebuffer indique.
+		// Attacher une texture se fait avec l'instruction qui suit.
+		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texOUT, 0);
+		// Dans le fragment shader, cela ne changera rien : gl_FragColor = vec4(...)
+		// ira ecrire dans la texture.
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
 	}
 }
+
+// =====================================================
+PathTracing.swapTextures = function(){
+	this.texOUT = this.texIN;
+}
+
+// =====================================================
+PathTracing.resetTextures = function(){
+	// on lie le framebuffer
+	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+	// on y attache les deux textures
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texIN, 0);
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, this.texOUT, 0);
+	// on appelle gl.clear
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	// on detache les deux textures pour ne pas avoir de conflit de lecture/ecriture
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, null, 0);
+}
+
+
 
 
 
 // =====================================================
 // FONCTIONS GENERALES, INITIALISATIONS
 // =====================================================
+
+// =====================================================
+function createTexture()
+{
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB,
+                  gl.viewportWidth, gl.viewportHeight, 0,
+                  gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+}
+
 
 // =====================================================
 function webGLStart() {
@@ -93,7 +206,7 @@ function initGL(canvas)
 		gl.viewportWidth = canvas.width;
 		gl.viewportHeight = canvas.height;
 		gl.viewport(0, 0, canvas.width, canvas.height);
-
+		
 		gl.clearColor(0.7, 0.7, 0.7, 1.0);
 		gl.enable(gl.DEPTH_TEST);
 		gl.enable(gl.CULL_FACE);
@@ -197,11 +310,16 @@ function shadersOk()
 }
 
 // =====================================================
-function drawScene() {
-	gl.clear(gl.COLOR_BUFFER_BIT);
+function drawScene() 
+{
 	if(shadersOk()) {
-		PathTracing.draw();
+		PathTracing.draw(); // on lit dans texIN et on ecrit dans texOUT : raffinement
+		rayPerPixel++; // un rayon a ete lance en plus dans chaque pixel
+		Canvas.draw(); // on lit dans PathTracing.texOUT et on ecrit dans le canvas
+		PathTracing.swapTextures(); // on echange les deux textures
+		return true;
 	}
+	return false;
 }
 
 
