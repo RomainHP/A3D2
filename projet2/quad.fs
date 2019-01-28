@@ -12,7 +12,7 @@ varying float vRandom;
 #define NB_REBONDS      1
 #define NB_DIR          1
 
-#define NB_LIGHTS       2
+#define NB_LIGHTS       1
 #define NB_SPHERES      1
 #define NB_PLANES       2
 
@@ -307,8 +307,8 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
         vec3 i = cross(renderinfo.normal, vecTmp);
         vec3 j = cross(renderinfo.normal, i);
         mat3 rotation = mat3(i, j, previousRenderInfo.normal);
-        float theta = acos(rand(previousRenderInfo.intersection));
-        float phi = rand(previousRenderInfo.intersection) * 2.0 * M_PI;
+        float theta = acos(rand(gl_FragCoord.xyz));
+        float phi = rand(gl_FragCoord.xyz) * 2.0 * M_PI;
         // vecteur direction en fonction de phi et theta
         float x = sin(theta) * cos(phi);
         float y = sin(theta) * sin(phi);
@@ -350,7 +350,7 @@ void createFixedScene(out Scene scene)
 
     // Lights
     scene.lights[0] = Light(vec3(0.0,20.0,5.0), vec3(2.0,2.0,2.0));
-    scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.1,0.1,0.7));
+    //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.1,0.1,0.7));
 
     // Spheres
     scene.spheres[0] = Sphere(vec3(0.0,100.0,5.0), 10.0, material1);
