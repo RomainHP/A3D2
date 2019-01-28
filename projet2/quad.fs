@@ -152,6 +152,80 @@ float intersectionPlane(in Ray ray, in Plane plane)
 }
 
 //----------------------------------------------------------------------//
+vec3 apply_phong(in RenderInfo renderinfo, in vec3 wi, in vec3 wo)
+{
+    vec3 lambert = renderinfo.material.kd/M_PI;
+
+    vec3 h = normalize(wi+wo);
+    float cosAlpha = max(0.0,dot(renderinfo.normal,h));
+
+    // formule de phong modifie
+    vec3 brdf = lambert + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
+
+    return brdf;
+}
+
+//----------------------------------------------------------------------//
+int intersection(in Scene scene, in Ray ray, out RenderInfo renderinfo)
+{
+    // Par défaut aucun objet n'est touché
+    renderinfo.objectType = NONE;
+
+    float tmin = -1.0;
+    int indice = -1;
+
+    // calcul de la sphere la plus proche
+    for (int i=0; i<NB_SPHERES; i++){
+        Sphere sphere = scene.spheres[i];
+        float t = intersectionSphere(ray, sphere);
+        if (t>=0.0){
+            if (tmin==-1.0 || t<tmin) {
+                indice = i;
+                renderinfo.objectType = SPHERE;
+                tmin = t;
+            }
+        }
+    }
+
+    // calcul du plan le plus proche
+    for (int i=0; i<NB_PLANES; i++){
+        Plane plane = scene.planes[i];
+        float t = intersectionPlane(ray,plane);
+        if (t>=0.0 && t<=FAR){
+            if (tmin==-1.0 || t<tmin) {
+                indice = i;
+                renderinfo.objectType = PLANE;
+                tmin = t;
+            }
+        }
+    }
+
+    vec3 intersection = ray.direction*tmin + ray.origin;
+    renderinfo.intersection = intersection;
+
+    return indice;
+}
+
+//----------------------------------------------------------------------//
+// bool isPointVisible(in Light light, in Scene scene, in vec3 point)
+// {
+//     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
+//     // on lance un rayon depuis la source de lumiere jusqu'au point en question
+//     Ray rayLight = Ray(light.position, normalize(pointLight));
+//     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+
+//     RenderInfo renderinfo;
+//     int indice = intersection(scene, rayLight, renderinfo);
+//     if (indice>-1 && renderinfo.objectType!=NONE){
+//         pointLight = renderinfo.intersection-light.position;
+//         float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+//         return (normPoint<norm);
+//     }
+
+//     return true;
+// }
+
+//----------------------------------------------------------------------//
 bool isPointVisible(in Light light, in Scene scene, in vec3 point)
 {
     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
@@ -187,63 +261,6 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point)
         }
     }
     return true;
-}
-
-//----------------------------------------------------------------------//
-vec3 apply_phong(in RenderInfo renderinfo, in vec3 wi, in vec3 wo)
-{
-    vec3 lambert = renderinfo.material.kd/M_PI;
-
-    vec3 h = normalize(wi+wo);
-    float cosAlpha = max(0.0,dot(renderinfo.normal,h));
-
-    // formule de phong modifie
-    vec3 brdf = lambert + vec3(renderinfo.material.ks) * (renderinfo.material.n+8.0)/(8.0*M_PI) * pow(cosAlpha,renderinfo.material.n);
-
-    return brdf;
-}
-
-//----------------------------------------------------------------------//
-int intersection(in Scene scene, in Ray ray, out RenderInfo renderinfo)
-{
-    // Par défaut aucun objet n'est touché
-    renderinfo.objectType = NONE;
-
-    float tmin = -1.0;
-    int indice = -1;
-    int objectType = NONE;  // type de l'objet le plus proche
-
-    // calcul de la sphere la plus proche
-    for (int i=0; i<NB_SPHERES; i++){
-        Sphere sphere = scene.spheres[i];
-        float t = intersectionSphere(ray, sphere);
-        if (t>=0.0){
-            if (tmin==-1.0 || t<tmin) {
-                indice = i;
-                objectType = SPHERE;
-                tmin = t;
-            }
-        }
-    }
-
-    // calcul du plan le plus proche
-    for (int i=0; i<NB_PLANES; i++){
-        Plane plane = scene.planes[i];
-        float t = intersectionPlane(ray,plane);
-        if (t>=0.0 && t<=FAR){
-            if (tmin==-1.0 || t<tmin) {
-                indice = i;
-                objectType = PLANE;
-                tmin = t;
-            }
-        }
-    }
-
-    vec3 intersection = ray.direction*tmin + ray.origin;
-    renderinfo.intersection = intersection;
-    renderinfo.objectType=objectType;
-
-    return indice;
 }
 
 //----------------------------------------------------------------------//
