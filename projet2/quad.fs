@@ -207,59 +207,21 @@ int intersection(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 }
 
 //----------------------------------------------------------------------//
-// bool isPointVisible(in Light light, in Scene scene, in vec3 point)
-// {
-//     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
-//     // on lance un rayon depuis la source de lumiere jusqu'au point en question
-//     Ray rayLight = Ray(light.position, normalize(pointLight));
-//     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-
-//     RenderInfo renderinfo;
-//     int indice = intersection(scene, rayLight, renderinfo);
-//     if (indice>-1 && renderinfo.objectType!=NONE){
-//         pointLight = renderinfo.intersection-light.position;
-//         float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-//         return (normPoint<norm);
-//     }
-
-//     return true;
-// }
-
-//----------------------------------------------------------------------//
 bool isPointVisible(in Light light, in Scene scene, in vec3 point)
 {
     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
     // on lance un rayon depuis la source de lumiere jusqu'au point en question
     Ray rayLight = Ray(light.position, normalize(pointLight));
     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-    // on teste pour chaque sphere si le rayon intersecte l'objet
-    for (int i=0; i<NB_SPHERES; i++){
-        Sphere sphere = scene.spheres[i];
-        float t = intersectionSphere(rayLight, sphere);
-        if (t>=0.0){
-            vec3 pt = rayLight.direction*t + rayLight.origin;
-            pointLight = pt-light.position;
-            float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-            if (norm<normPoint){
-                // si la distance du point est inferieur alors il cache le point que l'on teste
-                return false;
-            }
-        }
+
+    RenderInfo renderinfo;
+    int indice = intersection(scene, rayLight, renderinfo);
+    if (indice>-1 && renderinfo.objectType!=NONE){
+        pointLight = renderinfo.intersection-light.position;
+        float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+        return (normPoint<norm);
     }
-    // on fait la meme chose avec les plans
-    for (int i=0; i<NB_PLANES; i++){
-        Plane plane = scene.planes[i];
-        float t = intersectionPlane(rayLight, plane);
-        if (t>=0.0){
-            vec3 pt = rayLight.direction*t + rayLight.origin;
-            pointLight = pt-light.position;
-            float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-            if (norm<normPoint){
-                // si la distance du point est inferieur alors il cache le point que l'on teste
-                return false;
-            }
-        }
-    }
+
     return true;
 }
 
