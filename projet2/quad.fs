@@ -326,10 +326,10 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
         float rand1 = rand(float(k+1)*previousRenderInfo.intersection.xy*previousRenderInfo.intersection.yz);
         float rand2 = rand(float(k+1)*previousRenderInfo.intersection.yz*previousRenderInfo.intersection.xz);
         float phi = rand2 * 2.0 * M_PI;
-        // vecteur direction en fonction de phi et theta
-        float z = rand1;
+        // genere un point aleatoire sur la sphere
         float x = cos(phi) * sqrt(1.0-rand1*rand1);
         float y = sin(phi) * sqrt(1.0-rand1*rand1);
+        float z = rand1;
         vec3 direction = rotation * vec3(x, y, z);
         // lancer de rayon depuis le point d'intersection
         ray.origin = previousRenderInfo.intersection;
@@ -338,6 +338,7 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
         data.wo[k] = - ray.direction;
     }
 
+    // On ajoute la lumiere directe de k+1 a celle de k
     for (int k=NB_REBONDS-2; k>=0; k--) {
         if (data.renderinfo[k+1].objectType != NONE) {
             vec3 wo = data.wo[k];
