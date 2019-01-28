@@ -5,6 +5,7 @@ var gl;
 var rayRotation = mat4.create();
 var rayOrigin = [0.0, 0.0, 0.0];
 var random = 0.0;
+var focal = 50.0;
 // =====================================================
 
 
@@ -12,13 +13,13 @@ var random = 0.0;
 
 
 // =====================================================
-// Quad
+// PathTracing
 // =====================================================
 
-var Quad = { fname:'quad', loaded:-1, shader:null };
+var PathTracing = { fname:'PathTracing', loaded:-1, shader:null };
 
 // =====================================================
-Quad.initAll = function()
+PathTracing.initAll = function()
 {
 	vertices = [
 		-1.0, -1.0, 0.0,
@@ -37,7 +38,7 @@ Quad.initAll = function()
 }
 
 // =====================================================
-Quad.setShadersParams = function()
+PathTracing.setShadersParams = function()
 {
 	gl.useProgram(this.shader);
 
@@ -49,10 +50,11 @@ Quad.setShadersParams = function()
 	this.shader.rayOriginUniform = gl.getUniformLocation(this.shader, "uRayOrigin");
 	this.shader.rayRotationUniform =  gl.getUniformLocation(this.shader, "uRayRotation");
 	this.shader.randomUniform =  gl.getUniformLocation(this.shader, "uRandom");
+	this.shader.focalUniform =  gl.getUniformLocation(this.shader, "uFocal");
 }
 
 // =====================================================
-Quad.draw = function()
+PathTracing.draw = function()
 {
 	if(this.shader) {		
 		this.setShadersParams();
@@ -176,17 +178,18 @@ function compileShaders(Obj3D)
 function setMatrixUniforms(Obj3D) {
 	gl.uniformMatrix4fv(Obj3D.shader.rayRotationUniform, false, rayRotation);
 	gl.uniform3fv(Obj3D.shader.rayOriginUniform, rayOrigin);
-	gl.uniform1f(Obj3D.shader.randomUniform, random);
+	gl.uniform1f(Obj3D.shader.randomUniform, random);		
+	gl.uniform1f(Obj3D.shader.focalUniform, focal);
 }
 
 // =====================================================
 function shadersOk()
 {
-	if(Quad.loaded == 4) return true;
+	if(PathTracing.loaded == 4) return true;
 
-	if(Quad.loaded < 0) {
-		Quad.loaded = 0;
-		Quad.initAll();
+	if(PathTracing.loaded < 0) {
+		PathTracing.loaded = 0;
+		PathTracing.initAll();
 		return false;
 	}
 	
@@ -197,7 +200,7 @@ function shadersOk()
 function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	if(shadersOk()) {
-		Quad.draw();
+		PathTracing.draw();
 	}
 }
 
