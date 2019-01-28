@@ -283,7 +283,7 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
             renderinfo.material = nearestPlane.material;
             renderinfo.normal = nearestPlane.normal;
         }
-        renderinfo.intersection += renderinfo.normal * 0.0001;
+        renderinfo.intersection += renderinfo.normal * 0.001;
 
         for (int i=0; i<NB_LIGHTS; i++){
             // on verifie que l'objet n'est pas cache par un autre
@@ -316,7 +316,7 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
         if (k>0) previousRenderInfo = data.renderinfo[k-1];
         // rotation dans la demi-sphere exterieure
         vec3 vecTmp = vec3(1.0,0.0,0.0);
-        if (abs(dot(vecTmp,renderinfo.normal))>1.0-0.0001){
+        if (abs(dot(vecTmp,renderinfo.normal))>1.0-0.001){
             vecTmp = vec3(0.0,1.0,0.0); // si les vecteurs sont colineaires
         }
         vec3 i = cross(renderinfo.normal, vecTmp);
