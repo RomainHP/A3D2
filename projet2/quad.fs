@@ -9,7 +9,7 @@ varying float vRandom;
 #define NEAR            50.0
 #define FAR             1000.0
 
-#define NB_REBONDS      1
+#define NB_REBONDS      2
 #define NB_DIR          1
 
 #define NB_LIGHTS       1
@@ -84,7 +84,7 @@ struct Data
 };
 
 //----------------------------------------------------------------------//
-float rand(vec3 co)
+float rand(vec2 co)
 {
     return fract(sin(dot(co.xy * vRandom,vec2(12.9898,78.233))) * 43758.5453);
 }
@@ -152,7 +152,7 @@ float intersectionPlane(in Ray ray, in Plane plane)
 }
 
 //----------------------------------------------------------------------//
-bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objType, in int indice)
+bool isPointVisible(in Light light, in Scene scene, in vec3 point)
 {
     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
     // on lance un rayon depuis la source de lumiere jusqu'au point en question
@@ -160,8 +160,6 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objTyp
     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
     // on teste pour chaque sphere si le rayon intersecte l'objet
     for (int i=0; i<NB_SPHERES; i++){
-        // on verifie si le point appartient a l'objet en question
-        if (objType==SPHERE && indice==i) continue;
         Sphere sphere = scene.spheres[i];
         float t = intersectionSphere(rayLight, sphere);
         if (t>=0.0){
@@ -176,8 +174,6 @@ bool isPointVisible(in Light light, in Scene scene, in vec3 point, in int objTyp
     }
     // on fait la meme chose avec les plans
     for (int i=0; i<NB_PLANES; i++){
-        // on verifie si le point appartient a l'objet en question
-        if (objType==PLANE && indice==i) continue;
         Plane plane = scene.planes[i];
         float t = intersectionPlane(rayLight, plane);
         if (t>=0.0){
@@ -270,10 +266,11 @@ vec3 launch_ray(in Scene scene, in Ray ray, out RenderInfo renderinfo)
             renderinfo.material = nearestPlane.material;
             renderinfo.normal = nearestPlane.normal;
         }
+        renderinfo.intersection += renderinfo.normal * 0.0001;
 
         for (int i=0; i<NB_LIGHTS; i++){
             // on verifie que l'objet n'est pas cache par un autre
-            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection, renderinfo.objectType, indice)){
+            if (isPointVisible(scene.lights[i], scene, renderinfo.intersection)){
                 vec3 wi = normalize(scene.lights[i].position-renderinfo.intersection);
                 float cosTi = max(0.0,dot(wi,renderinfo.normal));
                 Lo += scene.lights[i].power * apply_phong(renderinfo, wi, wo) * cosTi;
@@ -293,48 +290,50 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
 
     if (NB_REBONDS<=0) return Loi;
 
+    // pour recuperer le renderinfo precedent
+    RenderInfo previousRenderInfo = renderinfo;
+    
     for (int k=0; k<NB_REBONDS; k++) {
         // si aucun objet n'est touche, on arrete
-        if (renderinfo.objectType==NONE) break;
-        RenderInfo previousRenderInfo = renderinfo;
-        // pour recuperer le renderinfo precedent
+        if (previousRenderInfo.objectType==NONE) break;
         if (k>0) previousRenderInfo = data.renderinfo[k-1];
         // rotation dans la demi-sphere exterieure
         vec3 vecTmp = vec3(1.0,0.0,0.0);
-        if (dot(vecTmp,renderinfo.normal)==0.0){
-            vecTmp = vec3(0.0,1.0,0.0);
+        if (abs(dot(vecTmp,renderinfo.normal))>1.0-0.0001){
+            vecTmp = vec3(0.0,1.0,0.0); // si les vecteurs sont colineaires
         }
         vec3 i = cross(renderinfo.normal, vecTmp);
         vec3 j = cross(renderinfo.normal, i);
         mat3 rotation = mat3(i, j, previousRenderInfo.normal);
-        float theta = acos(rand(gl_FragCoord.xyz));
-        float phi = rand(gl_FragCoord.xyz) * 2.0 * M_PI;
+        // on genere 2 nombres aleatoires pour lancer un rayon dans une direction au hasard
+        float rand1 = rand(float(k+1)*previousRenderInfo.intersection.xy*previousRenderInfo.intersection.yz);
+        float rand2 = rand(float(k+1)*previousRenderInfo.intersection.yz*previousRenderInfo.intersection.xz);
+        float phi = rand2 * 2.0 * M_PI;
         // vecteur direction en fonction de phi et theta
-        float x = sin(theta) * cos(phi);
-        float y = sin(theta) * sin(phi);
-        float z = cos(theta);
-        vec3 direction = rotation * (vec3(x, y, z) - previousRenderInfo.intersection);
+        float z = rand1;
+        float x = cos(phi) * sqrt(1.0-rand1*rand1);
+        float y = sin(phi) * sqrt(1.0-rand1*rand1);
+        vec3 direction = rotation * vec3(x, y, z);
         // lancer de rayon depuis le point d'intersection
         ray.origin = previousRenderInfo.intersection;
         ray.direction = normalize(direction);
         data.Lo[k] = launch_ray(scene, ray, data.renderinfo[k]);
-        data.wo[k] = normalize(ray.origin - data.renderinfo[k].intersection);
+        data.wo[k] = - ray.direction;
     }
 
     for (int k=NB_REBONDS-2; k>=0; k--) {
-        if (data.renderinfo[k+1].objectType!=NONE) {
+        if (data.renderinfo[k+1].objectType != NONE) {
             vec3 wo = data.wo[k];
-            vec3 wi = normalize(data.renderinfo[k+1].intersection-data.renderinfo[k].intersection);
-            float cosTi = max(0.0,dot(wi,data.renderinfo[k].normal));
+            vec3 wi = normalize(data.renderinfo[k+1].intersection - data.renderinfo[k].intersection);
+            float cosTi = max(0.0,dot(wi, data.renderinfo[k].normal));
             data.Lo[k] += data.Lo[k+1] * apply_phong(data.renderinfo[k], wi, wo) * cosTi;
         }
     }
 
-    vec3 wo = normalize(vOrigin - renderinfo.intersection);
+    vec3 wo = normalize(- vDirection);
     vec3 wi = normalize(data.renderinfo[0].intersection-renderinfo.intersection);
     float cosTi = max(0.0,dot(wi,renderinfo.normal));
     Loi += data.Lo[0] * apply_phong(renderinfo, wi, wo) * cosTi;
-    Loi *= 2.0 * M_PI / float(NB_DIR);
 
     return Loi;
 }
@@ -347,18 +346,19 @@ void createFixedScene(out Scene scene)
     Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
     Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
     Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 5.0);
+    Material material5 = Material(vec3(0.1,0.1,0.9), 0.2, 5.0);
 
     // Lights
-    scene.lights[0] = Light(vec3(0.0,20.0,5.0), vec3(2.0,2.0,2.0));
+    scene.lights[0] = Light(vec3(0.0,180.0,5.0), vec3(2.0,2.0,2.0));
     //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.1,0.1,0.7));
 
     // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,100.0,5.0), 10.0, material1);
+    scene.spheres[0] = Sphere(vec3(0.0,180.0,5.0), 10.0, material1);
     //scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
     //scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
     
     // Planes
-    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), 10.0, material4);
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), 10.0, material5);
     scene.planes[1] = Plane(normalize(vec3(0.0,-1.0,0.0)), 200.0, material4);
 }
 
@@ -372,7 +372,12 @@ void main(void)
     Ray ray = Ray(vOrigin, normalize(vDirection));
     vec3 Lo = launch_ray(scene, ray, renderinfo);   // eclairement direct
 
-    vec3 Loi = getIndirectLight(scene, renderinfo);
+    vec3 Loi = vec3(0.0);
+    for (int i=0; i<NB_DIR; i++) {
+        Loi += getIndirectLight(scene, renderinfo);
+    }
+
+    Loi *= 2.0 * M_PI / float(NB_DIR);
 
     gl_FragColor = vec4(Lo+Loi,1.0);
 }
