@@ -20,7 +20,7 @@ function createTexture()
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB,
                   gl.viewportWidth, gl.viewportHeight, 0,
-                  gl.RGBA, gl.UNSIGNED_BYTE, null);
+                  gl.RGB, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -47,11 +47,6 @@ PathTracing.initAll = function()
 
     // creation du frame buffer
     this.fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFER, this.fbo);
-    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
-        || gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_UNSUPPORTED) {
-        console.log("Framebuffer attachment: FAILED")
-    }
 
     // creation des deux textures
     this.texIN = createTexture();
@@ -128,6 +123,10 @@ PathTracing.draw = function()
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texOUT, 0);
 		// Dans le fragment shader, cela ne changera rien : gl_FragColor = vec4(...)
 		// ira ecrire dans la texture.
+		if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
+			|| gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_UNSUPPORTED) {
+			console.log("Framebuffer attachment: FAILED")
+		}
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
 	}
 }
@@ -152,12 +151,16 @@ ETAPE 5 : re-initialisation des textures (sur mouvement de la camera)
 PathTracing.resetTextures = function(){
 	// on lie le framebuffer
 	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
-	// on y attache les deux textures
+	// on y attache texIN
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texIN, 0);
+	// on appelle gl.clear
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	// on lie maintenant texOUT
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, this.texOUT, 0);
 	// on appelle gl.clear
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	// on detache les deux textures pour ne pas avoir de conflit de lecture/ecriture
+	// on detache la texture pour ne pas avoir de conflit de lecture/ecriture
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, null, 0);
+	// on detache le framebuffer pour ne pas avoir de conflit ailleurs
+	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }

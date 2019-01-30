@@ -1,11 +1,12 @@
 precision mediump float;
 
+uniform float uRandom;
+uniform sampler2D uTex;
+uniform float uNbRays;
+
 varying vec3 vOrigin;
 varying vec3 vDirection;
-varying float vRandom;
 varying vec2 vTexCoord;
-varying bool vMoving;
-varying int vNbRays;
 
 //----------------------------------------------------------------------//
 #define M_PI            3.141592653589793
@@ -87,7 +88,7 @@ struct Data
 //----------------------------------------------------------------------//
 float rand(vec2 co)
 {
-    return fract(sin(dot(co.xy * vRandom,vec2(12.9898,78.233))) * 43758.5453);
+    return fract(sin(dot(co.xy * uRandom,vec2(12.9898,78.233))) * 43758.5453);
 }
 
 //----------------------------------------------------------------------//
@@ -389,15 +390,23 @@ void main(void)
 
     RenderInfo renderinfo;
     Ray ray = Ray(vOrigin, normalize(vDirection));
-    vec3 Lo = vec3(0.0);
-    vec3 Loi = vec3(0.0);
-    if (vMoving) {
-        Lo += launch_ray(scene, ray, renderinfo);   // eclairement direct
+
+    vec3 color = vec3(0.0);
+    vec3 Lo = launch_ray(scene, ray, renderinfo);   // eclairement direct
+    vec3 Loi = getIndirectLight(scene, renderinfo); // eclairement indirect
+    //Loi = vec3(0.01);
+
+    if (uNbRays==1.0) {
+        color = Lo;
     } else {
-        Loi += getIndirectLight(scene, renderinfo); // eclairement indirect
+        float oldPart = (uNbRays - 1.0) / uNbRays;
+        float newPart = 1.0 / uNbRays;
+        vec3 oldColor = texture2D(uTex, vTexCoord).rgb * oldPart; // lecture dans texIN
+        vec3 newColor = Loi * newPart;
+        color = oldColor + newColor;
     }
 
     // Loi *= 2.0 * M_PI / float(1);
 
-    gl_FragColor = vec4(Lo+Loi,1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

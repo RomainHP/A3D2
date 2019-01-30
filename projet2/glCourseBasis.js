@@ -6,8 +6,7 @@ var rayRotation = mat4.create();
 var rayOrigin = [0.0, 0.0, 0.0];
 var random = 0.0;
 var focal = 50.0;
-var rayPerPixel = 0;
-var moving = true;
+var rayPerPixel = 1.0;
 // =====================================================
 
 
@@ -30,11 +29,24 @@ Canvas.initAll = function()
 		-1.0,  1.0, 0.0
 	];
 
+	texCoords = [
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0
+	];
+
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 4;
+
+	this.tBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
+	this.tBuffer.itemSize = 2;
+	this.tBuffer.numItems = 4;
 
 	loadShaders(this);
 }
@@ -48,6 +60,15 @@ Canvas.setShadersParams = function()
 	gl.enableVertexAttribArray(this.shader.vAttrib);
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	this.shader.tAttrib = gl.getAttribLocation(this.shader, "aTexCoord");
+	gl.enableVertexAttribArray(this.shader.tAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
+	gl.vertexAttribPointer(this.shader.tAttrib, this.tBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	gl.uniform1i(gl.getUniformLocation(this.shader, "uTex"), 1);
+    gl.activeTexture(gl.TEXTURE0 + 1);
+    gl.bindTexture(gl.TEXTURE_2D, PathTracing.texOUT);
 }
 
 // =====================================================
@@ -140,7 +161,6 @@ PathTracing.setShadersParams = function()
 	this.shader.rayRotationUniform =  gl.getUniformLocation(this.shader, "uRayRotation");
 	this.shader.randomUniform =  gl.getUniformLocation(this.shader, "uRandom");
 	this.shader.focalUniform =  gl.getUniformLocation(this.shader, "uFocal");
-	this.shader.movingUniform =  gl.getUniformLocation(this.shader, "uMoving");
 	this.shader.nbRaysUniform =  gl.getUniformLocation(this.shader, "uNbRays");
 }
 
@@ -157,29 +177,38 @@ PathTracing.draw = function()
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texOUT, 0);
 		// Dans le fragment shader, cela ne changera rien : gl_FragColor = vec4(...)
 		// ira ecrire dans la texture.
+		if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
+			|| gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_UNSUPPORTED) {
+			console.log("Framebuffer attachment: FAILED")
+		}
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
 	}
 }
 
 // =====================================================
 PathTracing.swapTextures = function(){
-	this.texOUT = this.texIN;
+	var tmp = this.texIN;
+	this.texIN = this.texOUT;
+	this.texOUT = tmp;
 }
 
 // =====================================================
 PathTracing.resetTextures = function(){
-	moving = true;
-	rayPerPixel=0;
 	// on lie le framebuffer
 	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
-	// on y attache les deux textures
+	// on y attache texIN
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texIN, 0);
+	// on appelle gl.clear
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	// on lie maintenant texOUT
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, this.texOUT, 0);
 	// on appelle gl.clear
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	// on detache les deux textures pour ne pas avoir de conflit de lecture/ecriture
+	// on detache la texture pour ne pas avoir de conflit de lecture/ecriture
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, null, 0);
+	// on detache le framebuffer pour ne pas avoir de conflit ailleurs
+	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	rayPerPixel=1.0;
 }
 
 
@@ -197,7 +226,7 @@ function createTexture()
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB,
                   gl.viewportWidth, gl.viewportHeight, 0,
-                  gl.RGBA, gl.UNSIGNED_BYTE, null);
+                  gl.RGB, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -316,7 +345,6 @@ function setMatrixUniforms(Obj3D) {
 	gl.uniform3fv(Obj3D.shader.rayOriginUniform, rayOrigin);
 	gl.uniform1f(Obj3D.shader.randomUniform, random);		
 	gl.uniform1f(Obj3D.shader.focalUniform, focal);
-	gl.uniform1i(Obj3D.shader.movingUniform, moving);
 	gl.uniform1f(Obj3D.shader.nbRaysUniform, rayPerPixel);
 }
 
@@ -345,7 +373,6 @@ function drawScene()
 {
 	if(shadersOk()) {
 		PathTracing.draw(); // on lit dans texIN et on ecrit dans texOUT : raffinement
-		moving = false;
 		rayPerPixel++; // un rayon a ete lance en plus dans chaque pixel
 		Canvas.draw(); // on lit dans PathTracing.texOUT et on ecrit dans le canvas
 		PathTracing.swapTextures(); // on echange les deux textures

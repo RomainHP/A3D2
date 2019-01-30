@@ -1,9 +1,10 @@
 attribute vec3 aVertexPosition;
 attribute vec2 aTexCoord;
 
-uniform sampler2D uTex;
+varying vec2 vTexCoord;
 
 //----------------------------------------------------------------------//
 void main(void) {
+    vTexCoord = aTexCoord;
     gl_Position = vec4(aVertexPosition, 1.0);
 }
