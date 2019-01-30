@@ -6,7 +6,8 @@ var rayRotation = mat4.create();
 var rayOrigin = [0.0, 0.0, 0.0];
 var random = 0.0;
 var focal = 50.0;
-var rayPerPixel = 1;
+var rayPerPixel = 0;
+var moving = true;
 // =====================================================
 
 
@@ -81,15 +82,28 @@ PathTracing.initAll = function()
 		-1.0,  1.0, 0.0
 	];
 
+	texCoords = [
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0
+	];
+
 	this.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 	this.vBuffer.itemSize = 3;
 	this.vBuffer.numItems = 4;
 
+	this.tBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
+	this.tBuffer.itemSize = 2;
+	this.tBuffer.numItems = 4;
+
 	// creation du frame buffer
-    this.fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    this.fBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
         || gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_UNSUPPORTED) {
         console.log("Framebuffer attachment: FAILED")
@@ -112,6 +126,11 @@ PathTracing.setShadersParams = function()
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
 	gl.vertexAttribPointer(this.shader.vAttrib, this.vBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+	this.shader.tAttrib = gl.getAttribLocation(this.shader, "aTexCoord");
+	gl.enableVertexAttribArray(this.shader.tAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
+	gl.vertexAttribPointer(this.shader.tAttrib, this.tBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
 	// on lie la texture qui sera utilisee en lecture par pathtracing.fs
 	gl.uniform1i(gl.getUniformLocation(this.shader, "uTex"), 0);
 	gl.activeTexture(gl.TEXTURE0);
@@ -121,6 +140,8 @@ PathTracing.setShadersParams = function()
 	this.shader.rayRotationUniform =  gl.getUniformLocation(this.shader, "uRayRotation");
 	this.shader.randomUniform =  gl.getUniformLocation(this.shader, "uRandom");
 	this.shader.focalUniform =  gl.getUniformLocation(this.shader, "uFocal");
+	this.shader.movingUniform =  gl.getUniformLocation(this.shader, "uMoving");
+	this.shader.nbRaysUniform =  gl.getUniformLocation(this.shader, "uNbRays");
 }
 
 // =====================================================
@@ -129,7 +150,7 @@ PathTracing.draw = function()
 	if(this.shader) {
 		this.setShadersParams()
 		setMatrixUniforms(this);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
 		// bindFramebuffer permet d'indiquer que le gl.drawXXX (ou gl.clear) ira
 		// modifier la texture attachee au framebuffer indique.
 		// Attacher une texture se fait avec l'instruction qui suit.
@@ -147,8 +168,10 @@ PathTracing.swapTextures = function(){
 
 // =====================================================
 PathTracing.resetTextures = function(){
+	moving = true;
+	rayPerPixel=0;
 	// on lie le framebuffer
-	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
 	// on y attache les deux textures
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texIN, 0);
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, this.texOUT, 0);
@@ -293,16 +316,24 @@ function setMatrixUniforms(Obj3D) {
 	gl.uniform3fv(Obj3D.shader.rayOriginUniform, rayOrigin);
 	gl.uniform1f(Obj3D.shader.randomUniform, random);		
 	gl.uniform1f(Obj3D.shader.focalUniform, focal);
+	gl.uniform1i(Obj3D.shader.movingUniform, moving);
+	gl.uniform1f(Obj3D.shader.nbRaysUniform, rayPerPixel);
 }
 
 // =====================================================
 function shadersOk()
 {
-	if(PathTracing.loaded == 4) return true;
+	if(PathTracing.loaded == 4 && Canvas.loaded == 4) return true;
 
 	if(PathTracing.loaded < 0) {
 		PathTracing.loaded = 0;
 		PathTracing.initAll();
+		return false;
+	}
+
+	if(Canvas.loaded < 0) {
+		Canvas.loaded = 0;
+		Canvas.initAll();
 		return false;
 	}
 	
@@ -314,6 +345,7 @@ function drawScene()
 {
 	if(shadersOk()) {
 		PathTracing.draw(); // on lit dans texIN et on ecrit dans texOUT : raffinement
+		moving = false;
 		rayPerPixel++; // un rayon a ete lance en plus dans chaque pixel
 		Canvas.draw(); // on lit dans PathTracing.texOUT et on ecrit dans le canvas
 		PathTracing.swapTextures(); // on echange les deux textures

@@ -1,4 +1,7 @@
 attribute vec3 aVertexPosition;
+attribute vec2 aTexCoord;
+
+uniform sampler2D uTex;
 
 //----------------------------------------------------------------------//
 void main(void) {

@@ -3,14 +3,15 @@ precision mediump float;
 varying vec3 vOrigin;
 varying vec3 vDirection;
 varying float vRandom;
+varying vec2 vTexCoord;
+varying bool vMoving;
+varying int vNbRays;
 
 //----------------------------------------------------------------------//
 #define M_PI            3.141592653589793
-#define NEAR            50.0
 #define FAR             1000.0
 
 #define NB_REBONDS      2
-#define NB_DIR          1
 
 #define NB_LIGHTS       1
 #define NB_SPHERES      1
@@ -388,14 +389,15 @@ void main(void)
 
     RenderInfo renderinfo;
     Ray ray = Ray(vOrigin, normalize(vDirection));
-    vec3 Lo = launch_ray(scene, ray, renderinfo);   // eclairement direct
-
+    vec3 Lo = vec3(0.0);
     vec3 Loi = vec3(0.0);
-    for (int i=0; i<NB_DIR; i++) {
-        Loi += getIndirectLight(scene, renderinfo);
+    if (vMoving) {
+        Lo += launch_ray(scene, ray, renderinfo);   // eclairement direct
+    } else {
+        Loi += getIndirectLight(scene, renderinfo); // eclairement indirect
     }
 
-    Loi *= 2.0 * M_PI / float(NB_DIR);
+    // Loi *= 2.0 * M_PI / float(1);
 
     gl_FragColor = vec4(Lo+Loi,1.0);
 }
