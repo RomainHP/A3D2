@@ -402,7 +402,7 @@ void main(void)
         float oldPart = (uNbRays - 1.0) / uNbRays;
         float newPart = 1.0 / uNbRays;
         vec3 oldColor = texture2D(uTex, vTexCoord).rgb * oldPart; // lecture dans texIN
-        vec3 newColor = Loi * newPart;
+        vec3 newColor = (Lo+Loi) * newPart;
         color = oldColor + newColor;
     }
 
