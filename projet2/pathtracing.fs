@@ -1,12 +1,12 @@
 precision mediump float;
 
+uniform float uRandom;
+
 varying vec3 vOrigin;
 varying vec3 vDirection;
-varying float vRandom;
 
 //----------------------------------------------------------------------//
 #define M_PI            3.141592653589793
-#define NEAR            50.0
 #define FAR             1000.0
 
 #define NB_REBONDS      2
@@ -86,7 +86,7 @@ struct Data
 //----------------------------------------------------------------------//
 float rand(vec2 co)
 {
-    return fract(sin(dot(co.xy * vRandom,vec2(12.9898,78.233))) * 43758.5453);
+    return fract(sin(dot(co.xy * uRandom,vec2(12.9898,78.233))) * 43758.5453);
 }
 
 //----------------------------------------------------------------------//
