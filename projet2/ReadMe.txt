@@ -7,12 +7,19 @@
 ---	Liste des fichiers
 ----------------------------------------------------------------------------------------------------------
 
--	quad.fs / quad.vs : le lancer de rayons est contenu dans le fichier .fs.
+-	pathtracing.fs / pathtracing.vs : effectue le pathtracing dans une direction et ecrit dans une
+texture
+
+-	canvas.fs / canvas.vs : permet d'afficher la texture resultant du pathtracing
 
 
 ----------------------------------------------------------------------------------------------------------
 ---	Fonctionnalites
 ----------------------------------------------------------------------------------------------------------
+
+Lorsque l'image reste stable, des rayons sont lances a chaque frame dans des directions aleatoires. Ainsi,
+le calcul de la lumiere indirecte devient de plus en plus precis et donc l'image est moins bruitee. Donc,
+lors d'un deplacement ou d'une rotation l'image se brouille, c'est normal.
 
 - Deplacement de la camera : 
         Avec Z, Q, S, D
