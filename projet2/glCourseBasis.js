@@ -66,6 +66,7 @@ Canvas.setShadersParams = function()
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
 	gl.vertexAttribPointer(this.shader.tAttrib, this.tBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+	// lecture de la texture texOUT qui a ete modifiee par le fragment shader
 	gl.uniform1i(gl.getUniformLocation(this.shader, "uTex"), 1);
     gl.activeTexture(gl.TEXTURE0 + 1);
     gl.bindTexture(gl.TEXTURE_2D, PathTracing.texOUT);
@@ -77,9 +78,7 @@ Canvas.draw = function()
 	if(this.shader) {
 		this.setShadersParams();
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-		// Ici, vu qu'on n'attache aucun framebuffer,
-		// alors le fragment shader ira ecrire dans le canva
-		gl.clear(gl.COLOR_BUFFER_BIT); // nettoyage du canvas
+		gl.clear(gl.COLOR_BUFFER_BIT);
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
 	}
 }
@@ -91,7 +90,7 @@ Canvas.draw = function()
 // PathTracing
 // =====================================================
 
-var PathTracing = { fname:'PathTracing', loaded:-1, shader:null };
+var PathTracing = { fname:'pathtracing', loaded:-1, shader:null };
 
 // =====================================================
 PathTracing.initAll = function()
@@ -122,7 +121,6 @@ PathTracing.initAll = function()
 	this.tBuffer.itemSize = 2;
 	this.tBuffer.numItems = 4;
 
-	// creation du frame buffer
     this.fBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
@@ -130,7 +128,7 @@ PathTracing.initAll = function()
         console.log("Framebuffer attachment: FAILED")
     }
 
-    // creation des deux textures
+	// creation des textures texIN et texOUT
     this.texIN = createTexture();
 	this.texOUT = createTexture();
 
@@ -152,7 +150,7 @@ PathTracing.setShadersParams = function()
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.tBuffer);
 	gl.vertexAttribPointer(this.shader.tAttrib, this.tBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	// on lie la texture qui sera utilisee en lecture par pathtracing.fs
+	// lecture de la texture texIN, qui sera lue par le fragment shader
 	gl.uniform1i(gl.getUniformLocation(this.shader, "uTex"), 0);
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, this.texIN);
@@ -168,19 +166,11 @@ PathTracing.setShadersParams = function()
 PathTracing.draw = function()
 {
 	if(this.shader) {
-		this.setShadersParams()
-		setMatrixUniforms(this);
+		this.setShadersParams();
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
-		// bindFramebuffer permet d'indiquer que le gl.drawXXX (ou gl.clear) ira
-		// modifier la texture attachee au framebuffer indique.
-		// Attacher une texture se fait avec l'instruction qui suit.
+		// Le fragment shader ecrit dans la texture texOUT
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texOUT, 0);
-		// Dans le fragment shader, cela ne changera rien : gl_FragColor = vec4(...)
-		// ira ecrire dans la texture.
-		if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
-			|| gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_UNSUPPORTED) {
-			console.log("Framebuffer attachment: FAILED")
-		}
+		setMatrixUniforms(this);
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vBuffer.numItems);
 	}
 }
@@ -194,21 +184,15 @@ PathTracing.swapTextures = function(){
 
 // =====================================================
 PathTracing.resetTextures = function(){
-	// on lie le framebuffer
 	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fBuffer);
-	// on y attache texIN
+	// Nettoyage des textures texIN et texOUT
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texIN, 0);
-	// on appelle gl.clear
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	// on lie maintenant texOUT
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, this.texOUT, 0);
-	// on appelle gl.clear
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	// on detache la texture pour ne pas avoir de conflit de lecture/ecriture
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
-	// on detache le framebuffer pour ne pas avoir de conflit ailleurs
 	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-	rayPerPixel=1.0;
+	rayPerPixel=1.0;	// au prochain coup, on repart de 1 rayon par pixel
 }
 
 
@@ -372,10 +356,10 @@ function shadersOk()
 function drawScene() 
 {
 	if(shadersOk()) {
-		PathTracing.draw(); // on lit dans texIN et on ecrit dans texOUT : raffinement
-		rayPerPixel++; // un rayon a ete lance en plus dans chaque pixel
-		Canvas.draw(); // on lit dans PathTracing.texOUT et on ecrit dans le canvas
-		PathTracing.swapTextures(); // on echange les deux textures
+		PathTracing.draw();			// Calcul de la lumiere directe et indirecte
+		rayPerPixel++;
+		Canvas.draw();				// Affichage de la texOUT dans le Canvas
+		PathTracing.swapTextures();	// texIN et texOUT sont echangees
 		return true;
 	}
 	return false;

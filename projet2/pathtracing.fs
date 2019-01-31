@@ -15,8 +15,8 @@ varying vec2 vTexCoord;
 #define NB_REBONDS      5
 
 #define NB_LIGHTS       1
-#define NB_SPHERES      1
-#define NB_PLANES       5
+#define NB_SPHERES      3
+#define NB_PLANES       6
 
 #define NONE    0
 #define SPHERE  1
@@ -209,59 +209,21 @@ int intersection(in Scene scene, in Ray ray, out RenderInfo renderinfo)
 }
 
 //----------------------------------------------------------------------//
-// bool isPointVisible(in Light light, in Scene scene, in vec3 point)
-// {
-//     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
-//     // on lance un rayon depuis la source de lumiere jusqu'au point en question
-//     Ray rayLight = Ray(light.position, normalize(pointLight));
-//     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-
-//     RenderInfo renderinfo;
-//     int indice = intersection(scene, rayLight, renderinfo);
-//     if (indice>-1 && renderinfo.objectType!=NONE){
-//         pointLight = renderinfo.intersection-light.position;
-//         float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-//         return (normPoint<norm);
-//     }
-
-//     return true;
-// }
-
-//----------------------------------------------------------------------//
 bool isPointVisible(in Light light, in Scene scene, in vec3 point)
 {
     vec3 pointLight = point-light.position; // vecteur entre la source de lumiere et le point
     // on lance un rayon depuis la source de lumiere jusqu'au point en question
     Ray rayLight = Ray(light.position, normalize(pointLight));
     float normPoint = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-    // on teste pour chaque sphere si le rayon intersecte l'objet
-    for (int i=0; i<NB_SPHERES; i++){
-        Sphere sphere = scene.spheres[i];
-        float t = intersectionSphere(rayLight, sphere);
-        if (t>=0.0){
-            vec3 pt = rayLight.direction*t + rayLight.origin;
-            pointLight = pt-light.position;
-            float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-            if (norm<normPoint){
-                // si la distance du point est inferieur alors il cache le point que l'on teste
-                return false;
-            }
-        }
+
+    RenderInfo renderinfo;
+    int indice = intersection(scene, rayLight, renderinfo);
+    if (indice>-1 && renderinfo.objectType!=NONE){
+        pointLight = renderinfo.intersection-light.position;
+        float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
+        return (normPoint<norm);
     }
-    // on fait la meme chose avec les plans
-    for (int i=0; i<NB_PLANES; i++){
-        Plane plane = scene.planes[i];
-        float t = intersectionPlane(rayLight, plane);
-        if (t>=0.0){
-            vec3 pt = rayLight.direction*t + rayLight.origin;
-            pointLight = pt-light.position;
-            float norm = (pointLight.x)*(pointLight.x)+(pointLight.y)*(pointLight.y);
-            if (norm<normPoint){
-                // si la distance du point est inferieur alors il cache le point que l'on teste
-                return false;
-            }
-        }
-    }
+
     return true;
 }
 
@@ -322,8 +284,8 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
         if (abs(dot(vecTmp,renderinfo.normal))>1.0-0.001){
             vecTmp = vec3(0.0,1.0,0.0); // si les vecteurs sont colineaires
         }
-        vec3 i = cross(renderinfo.normal, vecTmp);
-        vec3 j = cross(renderinfo.normal, i);
+        vec3 i = normalize(cross(renderinfo.normal, vecTmp));
+        vec3 j = normalize(cross(renderinfo.normal, i));
         mat3 rotation = mat3(i, j, previousRenderInfo.normal);
         // on genere 2 nombres aleatoires pour lancer un rayon dans une direction au hasard
         float rand1 = rand(float(k+1)*previousRenderInfo.intersection.xy*previousRenderInfo.intersection.yz);
@@ -365,27 +327,29 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
 void createFixedScene(out Scene scene)
 {
     // Materials
-    Material material1 = Material(vec3(0.9,0.1,0.1), 0.2, 50.0);
-    Material material2 = Material(vec3(0.1,0.1,0.9), 0.9, 20.0);
-    Material material3 = Material(vec3(0.1,0.9,0.9), 0.9, 2.0);
-    Material material4 = Material(vec3(0.9,0.9,0.9), 0.2, 5.0);
-    Material material5 = Material(vec3(0.1,0.1,0.9), 0.2, 5.0);
+    Material material0 = Material(vec3(0.5,0.5,0.5), 0.5, 50.0);
+    Material material1 = Material(vec3(0.9,0.1,0.1), 0.1, 50.0);
+    Material material2 = Material(vec3(0.1,0.1,0.9), 0.1, 20.0);
+    Material material3 = Material(vec3(0.1,0.9,0.9), 0.1, 2.0);
+    Material material4 = Material(vec3(0.5,0.5,0.5), 0.5, 5.0);
+    Material material5 = Material(vec3(0.9,0.1,0.9), 0.1, 5.0);
 
     // Lights
-    scene.lights[0] = Light(vec3(0.0,180.0,5.0), vec3(2.0,2.0,2.0));
+    scene.lights[0] = Light(vec3(0.0,60.0,5.0), vec3(2.0,2.0,2.0));
     //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.7,0.7,0.7));
 
     // Spheres
-    scene.spheres[0] = Sphere(vec3(0.0,180.0,5.0), 10.0, material1);
-    //scene.spheres[1] = Sphere(vec3(-10.0,55.0,-7.0), 3.0, material2);
-    //scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material3);
+    scene.spheres[0] = Sphere(vec3(0.0,120.0,5.0), 10.0, material0);
+    scene.spheres[1] = Sphere(vec3(-10.0,40.0,0.0), 3.0, material0);
+    scene.spheres[2] = Sphere(vec3(10.0,80.0,-5.0), 5.0, material0);
     
     // Planes
-    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), 10.0, material5);
-    scene.planes[1] = Plane(normalize(vec3(0.0,1.0,0.0)), 10.0, material4);
-    scene.planes[2] = Plane(normalize(vec3(-1.0,0.0,0.0)), 200.0, material4);
-    scene.planes[3] = Plane(normalize(vec3(1.0,0.0,0.0)), 200.0, material4);
+    scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), 10.0, material1);
+    scene.planes[1] = Plane(normalize(vec3(0.0,1.0,0.0)), 10.0, material2);
+    scene.planes[2] = Plane(normalize(vec3(-1.0,0.0,0.0)), 50.0, material3);
+    scene.planes[3] = Plane(normalize(vec3(1.0,0.0,0.0)), 50.0, material5);
     scene.planes[4] = Plane(normalize(vec3(0.0,-1.0,0.0)), 200.0, material4);
+    scene.planes[5] = Plane(normalize(vec3(0.0,0.0,-1.0)), 200.0, material1);
 }
 
 //----------------------------------------------------------------------//
@@ -400,19 +364,16 @@ void main(void)
     vec3 color = vec3(0.0);
     vec3 Lo = launch_ray(scene, ray, renderinfo);   // eclairement direct
     vec3 Loi = getIndirectLight(scene, renderinfo); // eclairement indirect
-    //Loi = vec3(0.01);
 
     if (uNbRays==1.0) {
-        color = Lo;
+        color = Lo+Loi;
     } else {
-        float oldPart = (uNbRays - 1.0) / uNbRays;
-        float newPart = 1.0 / uNbRays;
-        vec3 oldColor = texture2D(uTex, vTexCoord).rgb * oldPart; // lecture dans texIN
-        vec3 newColor = (Lo+Loi) * newPart;
+        float old = (uNbRays - 1.0) / uNbRays;
+        float new = 1.0 / uNbRays;
+        vec3 oldColor = texture2D(uTex, vTexCoord).rgb * old; // lecture dans texIN
+        vec3 newColor = (Lo+Loi) * new;
         color = oldColor + newColor;
     }
-
-    // Loi *= 2.0 * M_PI / float(1);
 
     gl_FragColor = vec4(color, 1.0);
 }
