@@ -12,11 +12,11 @@ varying vec2 vTexCoord;
 #define M_PI            3.141592653589793
 #define FAR             1000.0
 
-#define NB_REBONDS      2
+#define NB_REBONDS      5
 
 #define NB_LIGHTS       1
 #define NB_SPHERES      1
-#define NB_PLANES       2
+#define NB_PLANES       5
 
 #define NONE    0
 #define SPHERE  1
@@ -314,6 +314,7 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
     
     for (int k=0; k<NB_REBONDS; k++) {
         // si aucun objet n'est touche, on arrete
+        data.renderinfo[k].objectType = NONE;
         if (previousRenderInfo.objectType==NONE) break;
         if (k>0) previousRenderInfo = data.renderinfo[k-1];
         // rotation dans la demi-sphere exterieure
@@ -344,16 +345,18 @@ vec3 getIndirectLight(in Scene scene, in RenderInfo renderinfo)
     for (int k=NB_REBONDS-2; k>=0; k--) {
         if (data.renderinfo[k+1].objectType != NONE) {
             vec3 wo = data.wo[k];
-            vec3 wi = normalize(data.renderinfo[k+1].intersection - data.renderinfo[k].intersection);
+            vec3 wi = - data.wo[k+1];
             float cosTi = max(0.0,dot(wi, data.renderinfo[k].normal));
             data.Lo[k] += data.Lo[k+1] * apply_phong(data.renderinfo[k], wi, wo) * cosTi;
         }
     }
 
-    vec3 wo = normalize(- vDirection);
-    vec3 wi = normalize(data.renderinfo[0].intersection-renderinfo.intersection);
-    float cosTi = max(0.0,dot(wi,renderinfo.normal));
-    Loi += data.Lo[0] * apply_phong(renderinfo, wi, wo) * cosTi;
+    if (data.renderinfo[0].objectType != NONE) {
+        vec3 wo = - vDirection;
+        vec3 wi = - data.wo[0];
+        float cosTi = max(0.0,dot(wi,renderinfo.normal));
+        Loi += data.Lo[0] * apply_phong(renderinfo, wi, wo) * cosTi;
+    }
 
     return Loi;
 }
@@ -370,7 +373,7 @@ void createFixedScene(out Scene scene)
 
     // Lights
     scene.lights[0] = Light(vec3(0.0,180.0,5.0), vec3(2.0,2.0,2.0));
-    //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.1,0.1,0.7));
+    //scene.lights[1] = Light(vec3(50.0,20.0,30.0), vec3(0.7,0.7,0.7));
 
     // Spheres
     scene.spheres[0] = Sphere(vec3(0.0,180.0,5.0), 10.0, material1);
@@ -379,7 +382,10 @@ void createFixedScene(out Scene scene)
     
     // Planes
     scene.planes[0] = Plane(normalize(vec3(0.0,0.0,1.0)), 10.0, material5);
-    scene.planes[1] = Plane(normalize(vec3(0.0,-1.0,0.0)), 200.0, material4);
+    scene.planes[1] = Plane(normalize(vec3(0.0,1.0,0.0)), 10.0, material4);
+    scene.planes[2] = Plane(normalize(vec3(-1.0,0.0,0.0)), 200.0, material4);
+    scene.planes[3] = Plane(normalize(vec3(1.0,0.0,0.0)), 200.0, material4);
+    scene.planes[4] = Plane(normalize(vec3(0.0,-1.0,0.0)), 200.0, material4);
 }
 
 //----------------------------------------------------------------------//
